@@ -80,3 +80,24 @@ test("rechaza elecciones de especie inválidas y menos de tres idiomas", () => {
   assert.ok(result.errors.some(error => error.includes("linaje")));
   assert.ok(result.errors.some(error => error.includes("idiomas")));
 });
+
+
+test("la creación exige las habilidades válidas de la clase", () => {
+  const missing = createCharacterFromChoices({ ...base, classSkillChoices: [] });
+  assert.equal(missing.valid, false);
+  assert.ok(missing.errors.some(error => error.includes("exactamente 4")));
+
+  const duplicate = createCharacterFromChoices({
+    ...base,
+    classSkillChoices: ["acrobatics", "acrobatics", "investigation", "sleightOfHand"]
+  });
+  assert.equal(duplicate.valid, false);
+  assert.ok(duplicate.errors.some(error => error.includes("misma habilidad")));
+
+  const unavailable = createCharacterFromChoices({
+    ...base,
+    classSkillChoices: ["arcana", "deception", "investigation", "sleightOfHand"]
+  });
+  assert.equal(unavailable.valid, false);
+  assert.ok(unavailable.errors.some(error => error.includes("no está disponible")));
+});
