@@ -105,15 +105,15 @@ const levelOne = {
   barbarian: ["unarmoredDefense", "rage"],
   bard: ["bardicInspiration"],
   cleric: ["spellcasting"],
-  druid: ["spellcasting", "druidic", "primalOrder"],
-  fighter: ["fightingStyle", "weaponMastery"],
+  druid: ["spellcasting"],
+  fighter: ["fightingStyle"],
   monk: ["martialArts", "unarmoredDefense"],
   paladin: ["layOnHands", "spellcasting", "weaponMastery"],
-  ranger: ["spellcasting", "favoredEnemy", "weaponMastery"],
+  ranger: ["spellcasting"],
   rogue: ["sneakAttack", "thievesCant", "weaponMastery", "expertise"],
-  sorcerer: ["spellcasting", "innateSorcery"],
+  sorcerer: ["spellcasting"],
   warlock: ["eldritchInvocations", "pactMagic"],
-  wizard: ["spellcasting", "ritualAdeft", "arcaneRecovery"]
+  wizard: ["spellcasting"]
 };
 
 // Starting equipment is represented as selectable kits, not auto-granted items.
