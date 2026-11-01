@@ -100,12 +100,94 @@ const entries = {
   }
 };
 
+
+const levelOne = {
+  barbarian: ["unarmoredDefense", "rage"],
+  bard: ["bardicInspiration"],
+  cleric: ["spellcasting"],
+  druid: ["spellcasting", "druidic", "primalOrder"],
+  fighter: ["fightingStyle", "weaponMastery"],
+  monk: ["martialArts", "unarmoredDefense"],
+  paladin: ["layOnHands", "spellcasting", "weaponMastery"],
+  ranger: ["spellcasting", "favoredEnemy", "weaponMastery"],
+  rogue: ["sneakAttack", "thievesCant", "weaponMastery", "expertise"],
+  sorcerer: ["spellcasting", "innateSorcery"],
+  warlock: ["eldritchInvocations", "pactMagic"],
+  wizard: ["spellcasting", "ritualAdeft", "arcaneRecovery"]
+};
+
+// Starting equipment is represented as selectable kits, not auto-granted items.
+// null means the source extraction available for this pass did not expose the full kit.
+const startingEquipment = {
+  barbarian: null,
+  bard: {
+    options: [
+      { id: "A", items: ["leatherArmor", "daggers:2", "musicalInstrument:choice", "entertainerPack"], gold: 19 },
+      { id: "B", gold: 90 }
+    ]
+  },
+  cleric: {
+    options: [
+      { id: "A", items: ["chainShirt", "shield", "mace", "priestPack", "holySymbol"], gold: 7 },
+      { id: "B", gold: 110 }
+    ]
+  },
+  druid: null,
+  fighter: null,
+  monk: {
+    options: [
+      { id: "A", items: ["spear", "daggers:5", "artisanToolsOrMusicalInstrument:chosen", "explorerPack"], gold: 11 },
+      { id: "B", gold: 50 }
+    ]
+  },
+  paladin: {
+    options: [
+      { id: "A", items: ["chainMail", "shield", "longsword", "javelins:6", "holySymbol", "priestPack"], gold: 9 },
+      { id: "B", gold: 150 }
+    ]
+  },
+  ranger: {
+    options: [
+      { id: "A", items: ["studdedLeather", "scimitar", "shortsword", "longbow", "arrows:20", "quiver", "druidicFocus:mistletoeSprig", "explorerPack"], gold: 7 },
+      { id: "B", gold: 150 }
+    ]
+  },
+  rogue: {
+    options: [
+      { id: "A", items: ["leatherArmor", "daggers:2", "shortsword", "shortbow", "arrows:20", "quiver", "thievesTools", "burglarPack"], gold: 3 },
+      { id: "B", gold: 100 }
+    ]
+  },
+  sorcerer: {
+    options: [
+      { id: "A", items: ["spear", "daggers:2", "arcaneFocus:crystal", "dungeoneerPack"], gold: 28 },
+      { id: "B", gold: 50 }
+    ]
+  },
+  warlock: {
+    options: [
+      { id: "A", items: ["leatherArmor", "sickle", "daggers:2", "arcaneFocus:orb", "book:occultLore", "scholarPack"], gold: 15 },
+      { id: "B", gold: 100 }
+    ]
+  },
+  wizard: {
+    options: [
+      { id: "A", items: ["daggers:2", "arcaneFocus:staff", "spellbook", "scholarPack", "robe"], gold: 5 },
+      { id: "B", gold: 55 }
+    ]
+  }
+};
+
 export const classCatalogue = Object.freeze(
   Object.fromEntries(CLASS_IDS.map(id => [id, Object.freeze({
     id,
     ...entries[id],
     source: "Player's Handbook 2024, capítulo 3",
     status: "core_verified_progression_pending",
+    levelOneFeatures: Object.freeze(levelOne[id]),
+    levelOneRulesStatus: "summary_only_not_executable",
+    startingEquipment: startingEquipment[id],
+    startingEquipmentStatus: startingEquipment[id] ? "transcribed_choice_kits" : "pending_source_verification",
     levelProgression: null,
     subclasses: []
   })]))
