@@ -31,3 +31,16 @@ Los equipos que todavía no quedaron confirmados desde el material extraído per
 Fuente principal: *Player's Handbook 2024* en español, capítulo 3, tablas «Atributos básicos», apartados de equipo inicial y secciones de rasgos de clase. El resumen de puntos de golpe del capítulo 2 sirve como comprobación cruzada de los dados de golpe.
 
 El OCR puede confundir caracteres (por ejemplo, mostrar «1d3» donde la tabla impresa indica «1d8»). Los datos se mantienen como resúmenes mecánicos originales y no reproducen el texto explicativo del manual. Donde la extracción no permite confirmar un dato, el catálogo lo deja pendiente.
+
+
+## Primeras reglas deterministas de nivel 1
+
+Se añadió `src/characters/class-rules.js` con cálculos puros y comprobables:
+
+- Puntos de golpe máximos de nivel 1: dado de golpe máximo de la clase + modificador de Constitución.
+- Competencias en tiradas de salvación, obtenidas del catálogo de clase.
+- Validación de cantidad, duplicados y opciones permitidas para las habilidades elegidas por clase.
+- Bonificador por competencia de nivel 1 (+2).
+- Defensa sin armadura del bárbaro (10 + Destreza + Constitución) y del monje (10 + Destreza + Sabiduría), con restricciones explícitas de armadura y escudo.
+
+Estas funciones no sustituyen la implementación completa de los rasgos. Tampoco deciden qué equipo lleva el personaje: el estado del equipo debe venir de la ficha/inventario.
