@@ -1,23 +1,33 @@
 # Catálogo de clases — D&D 2024
 
-Estado: base de competencias verificada; implementación de progresión pendiente.
+Estado: competencias fundamentales registradas; algunos equipos iniciales transcritos; rasgos de nivel 1 en esquema; reglas ejecutables y progresión pendientes.
 
-Este catálogo transcribe los datos fundamentales de las tablas «Atributos básicos» del capítulo 3 del *Player's Handbook 2024* en español. Incluye característica principal, dado de golpe, salvaciones, opciones de habilidades y competencias iniciales con armaduras, armas y herramientas.
+## Datos fundamentales
 
-## Alcance actual
+El catálogo contiene las doce clases principales del capítulo 3: característica principal, dado de golpe, salvaciones, opciones de habilidades y competencias con armas, armaduras y herramientas.
 
-- Las doce clases principales están registradas.
-- Los dados de golpe se expresan como el tamaño del dado (por ejemplo, 8 representa 1d8).
-- «Cualquier habilidad» para el bardo significa que el jugador elige tres habilidades.
-- Las competencias que requieren elección (instrumentos del bardo, herramientas del monje) se representan como elecciones, no como competencias automáticas.
-- Las categorías especiales `martialLight` y `martialLightFinesse` son filtros que deben resolverse contra el catálogo de armas; no equivalen a competencia con todas las armas marciales.
+## Rasgos de nivel 1
 
-## No está implementado todavía
+Se añadieron identificadores de rasgos de nivel 1 únicamente como índice de implementación. No son todavía reglas ejecutables: sus condiciones, acciones, usos, recargas, fórmulas, excepciones e interacciones deben modelarse y probarse antes de permitir jugar con ellos.
 
-Equipo inicial completo A/B, rasgos de clase, recursos y descansos, lanzamiento de conjuros, tablas de progresión 1–20, subclases y sus niveles de elección. Por eso ninguna clase se considera jugable todavía.
+El campo `levelOneRulesStatus` permanece en `summary_only_not_executable` para todas las clases. Cuando la extracción disponible no confirmó el nombre de un rasgo, no se rellenó con una suposición.
+
+## Equipo inicial
+
+Los equipos A/B que ya están transcritos se almacenan como opciones seleccionables. No se conceden automáticamente: el jugador deberá escoger una opción y el futuro motor de inventario tendrá que convertir sus identificadores en objetos concretos.
+
+Los equipos que todavía no quedaron confirmados desde el material extraído permanecen en `null` y llevan el estado `pending_source_verification`. No se deben sustituir por paquetes inventados ni por compras calculadas a partir de precios.
+
+## Pendiente antes de considerar jugable una clase
+
+- Verificar y completar todos los equipos iniciales, incluidas las opciones de herramientas y focos.
+- Revisar los rasgos de nivel 1 contra las páginas originales y convertir sus reglas en mecánicas deterministas.
+- Completar conjuros, recursos, descansos, maestrías y demás elecciones.
+- Incorporar la progresión de nivel 1 a 20 y las cuatro subclases de cada clase, con sus niveles de selección.
+- Añadir pruebas de reglas y casos límite.
 
 ## Fuente y cautela
 
-Fuente principal: *Player's Handbook 2024*, capítulo 3, tablas «Atributos básicos de [clase]». La tabla de puntos de golpe de nivel 1 del capítulo 2 sirve como comprobación cruzada de los grupos de dados. Los datos se almacenan como resúmenes mecánicos originales; no se copia el texto explicativo del manual.
+Fuente principal: *Player's Handbook 2024* en español, capítulo 3, tablas «Atributos básicos», apartados de equipo inicial y secciones de rasgos de clase. El resumen de puntos de golpe del capítulo 2 sirve como comprobación cruzada de los dados de golpe.
 
-Los textos extraídos por OCR pueden confundir caracteres (por ejemplo, mostrar «1d3» donde la tabla impresa indica «1d8»). Los valores del catálogo deben contrastarse con la página impresa cuando haya discrepancia. Este documento no convierte datos incompletos en reglas operativas.
+El OCR puede confundir caracteres (por ejemplo, mostrar «1d3» donde la tabla impresa indica «1d8»). Los datos se mantienen como resúmenes mecánicos originales y no reproducen el texto explicativo del manual. Donde la extracción no permite confirmar un dato, el catálogo lo deja pendiente.
