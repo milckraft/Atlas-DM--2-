@@ -1,14 +1,21 @@
-# Estado de turno y economía de acciones
+# Estado de turno de combate
 
-Módulo determinista e inmutable para el estado individual de un combatiente.
+Módulo inmutable para economía de acciones y recursos del pícaro. No narra, no tira dados y no resuelve ataques ni posiciones.
 
-- Un turno comienza con acción, acción adicional, reacción y movimiento disponibles.
-- Gastar un recurso lo deja indisponible hasta el siguiente turno (la reacción se restaura al inicio del turno propio).
-- El movimiento consume velocidad disponible y no puede superar el remanente.
-- Puntería certera (pícaro nivel 3+) exige no haberse movido, gasta acción adicional, reduce movimiento restante a cero y concede ventaja al siguiente ataque del turno.
-- Ataque furtivo se puede marcar una sola vez por turno y se restablece al comenzar el siguiente.
-- Golpe de suerte (nivel 20) consume su uso al convertir una prueba d20 fallida en 20; descanso corto o largo lo recarga.
+## Responsabilidades
 
-## Alcance y límites
+- Una acción, una acción adicional y una reacción por turno propio.
+- Movimiento disponible y consumido; se reinicia al comenzar el turno propio.
+- Puntería certera consume acción adicional, exige no haberse movido, reduce movimiento restante a cero y concede ventaja al siguiente ataque.
+- Ataque furtivo se registra contra un identificador de turno global, no solo el turno propio del pícaro. Esto permite aplicar la limitación una vez por turno también durante ataques de reacción.
+- Golpe de suerte consume su uso cuando convierte una prueba d20 fallida en 20; se recupera con descanso corto o largo.
 
-Este módulo administra estado individual; todavía no resuelve iniciativa, posiciones, alcance, acciones de otros personajes, condiciones, ataques, daño, concentración ni duración global de efectos. La integración de Esquiva asombrosa con la reacción debe realizarse desde el controlador de combate, usando `spendTurnResource(state, "reaction")`. No se declara terminado el motor de combate.
+## Contexto de iniciativa
+
+El controlador debe llamar `setCombatTurnContext(state, combatTurnId)` cada vez que cambia la criatura activa en iniciativa. Esta función no refresca acciones ni reacción del pícaro. Al comenzar el turno propio, llamar `startCombatTurn(state, combatTurnId)`, que refresca su economía personal.
+
+Los identificadores deben ser estables y distintos para cada turno individual de criatura (por ejemplo, `round-2-enemy-1`). No usar solo el número de ronda: varias criaturas actúan dentro de la misma ronda.
+
+## Integración pendiente
+
+Este módulo todavía no implementa iniciativa, distancias entre criaturas, alcance, ataques, daño, condiciones, concentración ni turnos de otras criaturas. El controlador de combate debe consumir la reacción al usar Esquiva asombrosa y debe consultar el contexto global antes de permitir Ataque furtivo.
