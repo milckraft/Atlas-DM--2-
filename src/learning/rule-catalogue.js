@@ -75,7 +75,7 @@ export function getRuleById(id) {
 
 export function searchRules(query) {
   if (typeof query !== "string" || !query.trim()) return [];
-  const terms = query.toLocaleLowerCase("es").trim().split(/\\s+/);
+  const terms = query.toLocaleLowerCase("es").trim().split(/\s+/);
   return RULE_CATALOGUE
     .map(entry => {
       const haystack = [entry.title, entry.id, ...entry.keywords].join(" ").toLocaleLowerCase("es");
