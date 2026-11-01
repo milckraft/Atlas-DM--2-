@@ -155,10 +155,17 @@ export function validateSpeciesSelection(id, selection = {}) {
   const species = getSpeciesEntry(id);
   if (!species) return { valid: false, errors: ["Especie desconocida."] };
   const errors = [];
+  const choiceLabels = {
+    lineage: "linaje",
+    keenSense: "sentido agudo",
+    giantAncestry: "ascendencia gigante",
+    spellcastingAbility: "aptitud mágica",
+    legacy: "legado"
+  };
   for (const [choice, allowed] of Object.entries(species.choices)) {
     const value = selection[choice];
     if (Array.isArray(allowed) && !allowed.includes(value)) {
-      errors.push(`La elección "${choice}" no es válida para ${species.name}.`);
+      errors.push(`La elección de ${choiceLabels[choice] ?? choice} "${value}" no es válida para ${species.name}.`);
     }
     if (allowed === "skill" && (typeof value !== "string" || !value.trim())) {
       errors.push("Debes elegir una habilidad para el rasgo Diestro.");
