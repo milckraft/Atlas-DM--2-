@@ -39,9 +39,10 @@ test("Sneak Attack is once per global creature turn, including reaction turns", 
   s=markSneakAttackUsed(s).state;
   assert.equal(markSneakAttackUsed(s).marked,false);
   s=setCombatTurnContext(s,"enemy-turn-1");
-  assert.equal(markSneakAttackUsed(s).marked,true);
-  assert.equal(markSneakAttackUsed(s).marked,false);
-  s=setCombatTurnContext(s,"rogue-turn-2");
+  const enemyTurnUse=markSneakAttackUsed(s);
+  assert.equal(enemyTurnUse.marked,true);
+  assert.equal(markSneakAttackUsed(enemyTurnUse.state).marked,false);
+  s=setCombatTurnContext(enemyTurnUse.state,"rogue-turn-2");
   assert.equal(markSneakAttackUsed(s).marked,true);
 });
 test("changing global turn context does not refresh personal action economy", () => {
