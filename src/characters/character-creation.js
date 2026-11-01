@@ -136,6 +136,7 @@ export function createCharacterFromChoices(input) {
       },
       languages: input.languages,
       proficiencies: {
+        savingThrows: getClassSavingThrowProficiencies(input.class),
         skills: selectedSkills,
         tools: [
           ...(background.tool.type === "fixed"
