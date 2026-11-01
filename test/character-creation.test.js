@@ -23,7 +23,9 @@ test("integra trasfondo, especie, matriz estándar y aumentos", () => {
   assert.equal(result.character.abilities.DEX, 17);
   assert.equal(result.character.abilities.WIS, 15);
   assert.deepEqual(result.character.proficiencies.skills, ["insight", "stealth", "perception", "acrobatics", "deception", "investigation", "sleightOfHand"]);
-  assert.deepEqual(result.character.proficiencies.savingThrows, ["dexterity", "intelligence"]);\n  assert.equal(result.character.hitPoints.maximum, 9);\n  assert.equal(result.character.proficiencyBonus, 2);
+  assert.deepEqual(result.character.proficiencies.savingThrows, ["dexterity", "intelligence"]);
+  assert.equal(result.character.hitPoints.maximum, 9);
+  assert.equal(result.character.proficiencyBonus, 2);
   assert.equal(result.character.speed, 9);
   assert.equal(result.character.creationStatus, "draft_pending_class_rules");
 });
