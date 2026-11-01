@@ -30,7 +30,7 @@ export function activateSteadyAim({ level, hasMovedThisTurn }) {
   requireLevel(level, 3, "Puntería certera");
   if (typeof hasMovedThisTurn !== "boolean") throw new TypeError("hasMovedThisTurn debe ser booleano.");
   if (hasMovedThisTurn) return { valid: false, reason: "already-moved" };
-  return { valid: true, grants: "advantage-on-next-attack-this-turn", speed becomes: 0 };
+  return { valid: true, grants: "advantage-on-next-attack-this-turn", speedAfterActivation: 0 };
 }
 
 /** Esquiva asombrosa: halve damage from a hit by an attacker the rogue can see. */
