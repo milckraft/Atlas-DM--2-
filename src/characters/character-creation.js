@@ -156,7 +156,12 @@ export function createCharacterFromChoices(input) {
         } : {})
       },
       speciesTraits: species.traits.map(trait => trait.id),
-      speed: species.speedMeters,\n      hitPoints: {\n        maximum: calculateLevelOneHitPoints(input.class, finalScores.CON),\n        current: calculateLevelOneHitPoints(input.class, finalScores.CON)\n      },\n      proficiencyBonus: 2,
+      speed: species.speedMeters,
+      hitPoints: {
+        maximum: calculateLevelOneHitPoints(input.class, finalScores.CON),
+        current: calculateLevelOneHitPoints(input.class, finalScores.CON)
+      },
+      proficiencyBonus: 2,
       createdAt: input.createdAt,
       updatedAt: input.updatedAt
     });
@@ -197,7 +202,8 @@ export function listCharacterCreationRequirements() {
     conditional: [
       "backgroundToolChoice para trasfondos con herramienta a elegir",
       "backgroundFeatOptions para dotes que requieren elecciones",
-      "classSkillChoices para las habilidades elegidas de la clase",\n      "speciesChoices para linajes, tamaño y rasgos con elección",
+      "classSkillChoices para las habilidades elegidas de la clase",
+      "speciesChoices para linajes, tamaño y rasgos con elección",
       "humanOriginFeat y humanOriginFeatOptions para humanos"
     ],
     abilityIds: [...ABILITIES],
