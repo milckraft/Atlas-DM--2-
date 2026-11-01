@@ -55,3 +55,27 @@ test("incomplete class entries cannot be treated as playable", () => {
     assert.equal(isClassPlayable(id), false);
   }
 });
+
+test("level-one feature outlines are explicit and never treated as executable rules", () => {
+  for (const entry of listClassEntries()) {
+    assert.ok(Array.isArray(entry.levelOneFeatures));
+    assert.equal(entry.levelOneRulesStatus, "summary_only_not_executable");
+  }
+  assert.deepEqual(getClassEntry("barbarian").levelOneFeatures, ["unarmoredDefense", "rage"]);
+  assert.deepEqual(getClassEntry("bard").levelOneFeatures, ["bardicInspiration"]);
+  assert.deepEqual(getClassEntry("monk").levelOneFeatures, ["martialArts", "unarmoredDefense"]);
+  assert.deepEqual(getClassEntry("rogue").levelOneFeatures, ["sneakAttack", "thievesCant", "weaponMastery", "expertise"]);
+});
+
+test("starting equipment choices remain selectable and incomplete kits stay unavailable", () => {
+  for (const entry of listClassEntries()) {
+    if (entry.startingEquipment) {
+      assert.deepEqual(entry.startingEquipment.options.map(option => option.id), ["A", "B"]);
+      assert.equal(entry.startingEquipmentStatus, "transcribed_choice_kits");
+    } else {
+      assert.equal(entry.startingEquipmentStatus, "pending_source_verification");
+    }
+  }
+  assert.equal(getClassEntry("rogue").startingEquipment.options[0].gold, 3);
+  assert.equal(getClassEntry("wizard").startingEquipment.options[1].gold, 55);
+});
