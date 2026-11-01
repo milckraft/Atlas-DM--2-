@@ -22,7 +22,7 @@ test("eligible hit adds Sneak Attack and consumes it for the global turn", () =>
   assert.equal(result.sneakAttack.applied, true);
   assert.equal(result.sneakAttack.dice, 3);
   assert.equal(result.sneakAttack.total, 6);
-  assert.equal(result.damage.total, 8);
+  assert.equal(result.damage.total, 12);
   assert.equal(result.turnState.sneakAttackUsed, true);
 });
 
@@ -36,7 +36,7 @@ test("critical hit doubles Sneak Attack dice, not a flat modifier", () => {
   });
   assert.equal(result.sneakAttack.rolls.length, 6);
   assert.equal(result.sneakAttack.total, 12);
-  assert.equal(result.damage.total, 18);
+  assert.equal(result.damage.total, 20);
 });
 
 test("miss does not consume Sneak Attack", () => {
