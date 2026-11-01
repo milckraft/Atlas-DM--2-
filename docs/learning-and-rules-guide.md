@@ -77,3 +77,14 @@ El jugador puede cambiar estas preferencias en cualquier momento. La configuraci
 ## Estado
 
 Diseño aprobado para incorporarse a la arquitectura. Implementación pendiente: catálogo de referencias, preferencias por jugador, consultas contextuales y pruebas.
+
+
+## Primera implementación técnica
+
+Se incorporó una primera base funcional, todavía sin integración con Discord:
+- Catálogo de referencias con identificador, palabras clave, categoría, fuente y estado de verificación.
+- Búsqueda de reglas por texto e identificación directa por ID.
+- Explicaciones breves o detalladas que conservan el estado de verificación.
+- Preferencias individuales validadas e inmutables, con control de ayudas contextuales y registro de temas explicados.
+
+Los estados actuales distinguen mecánicas verificadas en el motor de Atlas DM de rasgos con implementación parcial. Una entrada parcial nunca se presenta como regla oficial completamente implementada. La cobertura del catálogo es deliberadamente pequeña: crecerá a medida que se verifiquen reglas contra el Manual del jugador 2024.
