@@ -4,6 +4,7 @@ import { getBackgroundEntry, validateBackgroundChoices } from "./background-cata
 import { getOriginFeat, validateOriginFeatSelection } from "./origin-feat-catalogue.js";
 import { getSpeciesEntry, validateSpeciesSelection } from "./species-catalogue.js";
 import { getClassEntry, isClassPlayable } from "./class-catalogue.js";
+import { calculateLevelOneHitPoints, getClassSavingThrowProficiencies, validateClassSkillChoices } from "./class-rules.js";
 
 const BACKGROUND_FEAT_IDS = Object.freeze({
   "Magic Initiate (Cleric)": "magic-initiate",
@@ -89,6 +90,9 @@ export function createCharacterFromChoices(input) {
     }
   }
 
+  const classSkillValidation = validateClassSkillChoices(input.class, input.classSkillChoices ?? []);
+  errors.push(...classSkillValidation.errors);
+
   const backgroundSkills = background.skills.map(toSchemaSkill);
   const speciesSkill = input.species === "human"
     ? input.speciesChoices?.skill
@@ -103,7 +107,8 @@ export function createCharacterFromChoices(input) {
     errors.push("Una competencia de habilidad no coincide con el identificador interno del catálogo.");
   }
 
-  const selectedSkills = [...backgroundSkills, ...extraSkills];
+  const classSkills = (input.classSkillChoices ?? []).map(toSchemaSkill);
+  const selectedSkills = [...backgroundSkills, ...extraSkills, ...classSkills];
   if (new Set(selectedSkills).size !== selectedSkills.length) {
     errors.push("Una habilidad no puede añadirse dos veces como competencia de origen.");
   }
@@ -151,7 +156,7 @@ export function createCharacterFromChoices(input) {
         } : {})
       },
       speciesTraits: species.traits.map(trait => trait.id),
-      speed: species.speedMeters,
+      speed: species.speedMeters,\n      hitPoints: {\n        maximum: calculateLevelOneHitPoints(input.class, finalScores.CON),\n        current: calculateLevelOneHitPoints(input.class, finalScores.CON)\n      },\n      proficiencyBonus: 2,
       createdAt: input.createdAt,
       updatedAt: input.updatedAt
     });
@@ -192,7 +197,7 @@ export function listCharacterCreationRequirements() {
     conditional: [
       "backgroundToolChoice para trasfondos con herramienta a elegir",
       "backgroundFeatOptions para dotes que requieren elecciones",
-      "speciesChoices para linajes, tamaño y rasgos con elección",
+      "classSkillChoices para las habilidades elegidas de la clase",\n      "speciesChoices para linajes, tamaño y rasgos con elección",
       "humanOriginFeat y humanOriginFeatOptions para humanos"
     ],
     abilityIds: [...ABILITIES],
