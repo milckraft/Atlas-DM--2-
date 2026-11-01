@@ -1,3 +1,4 @@
+import { randomInt } from "node:crypto";
 import { rollD20 } from "../rules/dice.js";
 function validateInteger(value,name,min=-100,max=100){if(!Number.isInteger(value)||value<min||value>max)throw new RangeError(`${name} inválido.`);}
 function parseDice(expression){
@@ -8,7 +9,7 @@ function parseDice(expression){
  if(count<1||count>20||sides<2||sides>100)throw new RangeError("Dados de daño fuera de límites.");
  return {count,sides,modifier};
 }
-function rollDamage(expression,{critical=false,randomDie=s=>Math.floor(Math.random()*s)+1}={}){
+function rollDamage(expression,{critical=false,randomDie=s=>randomInt(1,s+1)}={}){
  const p=parseDice(expression),count=p.count*(critical?2:1);
  const rolls=Array.from({length:count},()=>{const v=randomDie(p.sides);if(!Number.isInteger(v)||v<1||v>p.sides)throw new RangeError("Fuente de daño inválida.");return v;});
  return {rolls,total:Math.max(0,rolls.reduce((a,b)=>a+b,0)+p.modifier),modifier:p.modifier,diceCount:count,sides:p.sides};
