@@ -63,7 +63,9 @@ export function resolveCharacterWeaponAttack({
   const result = resolveAttack({
     attackBonus: profile.attackBonus,
     targetArmorClass,
-    damageDice: profile.damageDice,
+    damageDice: profile.damageModifier === 0
+      ? profile.damageDice
+      : `${profile.damageDice}${profile.damageModifier > 0 ? "+" : ""}${profile.damageModifier}`,
     advantage,
     disadvantage,
     ...(randomD20 ? { randomD20 } : {}),
