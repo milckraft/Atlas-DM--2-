@@ -10,7 +10,8 @@
   "scripts": {
     "start": "node src/index.js",
     "deploy:commands": "node src/deploy-commands.js",
-    "check": "node --check src/index.js && node --check src/deploy-commands.js"
+    "check": "node --check src/index.js && node --check src/deploy-commands.js && node --check src/rules/dice.js && node --check src/rules/checks.js",
+    "test": "node --test"
   },
   "dependencies": {
     "discord.js": "^14.27.0",
