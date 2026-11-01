@@ -10,3 +10,5 @@
 The caller must provide the weapon's damage dice, whether it is ranged, whether it has finesse, and whether the character is proficient. This module does not infer weapon properties or proficiency from incomplete equipment data.
 
 Not yet covered: versatile weapon selection, thrown weapons' specific ability rules, magic weapon bonuses, two-weapon fighting, ammunition, range, cover, reach, mastery properties, feats, class features, spell attacks, damage types, resistance, vulnerability, immunity, and equipped-item validation. It does not spend actions or reactions and does not apply Sneak Attack.
+
+`resolveCharacterWeaponAttack` composes this profile with the deterministic d20 and damage resolver, returning both the attack result and the profile used. It still does not spend actions or apply class features.
