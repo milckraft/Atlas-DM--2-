@@ -9,7 +9,7 @@ import {
 
 test("Acción astuta accepts only Dash, Disengage or Hide as bonus action", () => {
   assert.equal(validateCunningAction({level:2,option:"dash"}).valid,true);
-  assert.equal(validateCunningAction({level:1,option:"dash"}).valid,false);
+  assert.throws(() => validateCunningAction({level:1,option:"dash"}), RangeError);
   assert.equal(validateCunningAction({level:2,option:"attack"}).valid,false);
 });
 test("Puntería certera requires that the rogue has not moved", () => {
