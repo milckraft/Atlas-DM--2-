@@ -11,6 +11,6 @@ export function explainRule(query, { detail = "brief" } = {}) {
     status: rule.status,
     source: rule.source,
     explanation: detail === "brief" ? rule.summary : rule.detail,
-    canBePresentedAsOfficialCompleteRule: rule.status === "engine_verified"
+    isEngineImplemented: rule.status === "engine_verified"
   });
 }
