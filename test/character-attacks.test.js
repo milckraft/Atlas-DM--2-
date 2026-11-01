@@ -45,3 +45,16 @@ test("character weapon attack composes profile, d20 and damage resolution", () =
   assert.equal(result.hit, true);
   assert.equal(result.damage.total, 8);
 });
+
+test("critical weapon attack doubles dice but not ability modifier", () => {
+  const result = resolveCharacterWeaponAttack({
+    character,
+    weapon: { damageDice: "1d6", isRanged: false, hasFinesse: true },
+    proficient: true,
+    targetArmorClass: 25,
+    randomD20: () => 20,
+    randomDamageDie: () => 4
+  });
+  assert.equal(result.critical, true);
+  assert.equal(result.damage.total, 12);
+});
