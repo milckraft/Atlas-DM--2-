@@ -24,6 +24,26 @@ const entries = [
     detail: "Quien solicita la prueba debe indicar la característica, puntuación, CD y si el personaje tiene competencia. El motor no adivina competencias."
   },
   {
+    id: "ability-modifier",
+    title: "Modificador de característica",
+    keywords: ["modificador", "puntuación", "fuerza", "destreza", "constitución", "inteligencia", "sabiduría", "carisma"],
+    category: "core",
+    status: "engine_verified",
+    source: "Atlas DM ability-check engine",
+    summary: "El motor calcula el modificador de una característica a partir de su puntuación.",
+    detail: "La función de Atlas DM acepta puntuaciones entre 1 y 30 y calcula el modificador con la fórmula implementada en el motor. Esta referencia describe el cálculo del programa, no sustituye la explicación completa de las características del manual."
+  },
+  {
+    id: "proficiency-bonus",
+    title: "Bonificador por competencia",
+    keywords: ["competencia", "bonificador", "nivel", "proficiency"],
+    category: "core",
+    status: "engine_verified",
+    source: "Atlas DM checks engine",
+    summary: "El motor calcula el bonificador por competencia según el nivel del personaje.",
+    detail: "La función de Atlas DM admite niveles del 1 al 20 y calcula el bonificador correspondiente. Solo se suma en una prueba cuando el personaje tiene la competencia aplicable."
+  },
+  {
     id: "rogue-sneak-attack",
     title: "Ataque furtivo",
     keywords: ["pícaro", "ataque furtivo", "furtivo", "finesse", "sutil"],
