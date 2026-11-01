@@ -1,0 +1,8 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import {resolveAttack} from "../src/combat/attack-resolution.js";
+test("attack hits at AC and resolves damage",()=>{const r=resolveAttack({attackBonus:4,targetArmorClass:15,damageDice:"1d8+2",randomD20:()=>11,randomDamageDie:()=>6});assert.equal(r.hit,true);assert.equal(r.total,15);assert.equal(r.damage.total,8);});
+test("natural 20 doubles damage dice, not flat modifier",()=>{const r=resolveAttack({attackBonus:1,targetArmorClass:30,damageDice:"1d6+2",randomD20:()=>20,randomDamageDie:()=>5});assert.equal(r.critical,true);assert.equal(r.damage.diceCount,2);assert.equal(r.damage.total,12);});
+test("natural 1 misses automatically",()=>{const r=resolveAttack({attackBonus:20,targetArmorClass:5,damageDice:"1d8",randomD20:()=>1});assert.equal(r.hit,false);assert.equal(r.damage,null);});
+test("advantage and disadvantage cancel",()=>{const r=resolveAttack({attackBonus:0,targetArmorClass:10,damageDice:"1d4",advantage:true,disadvantage:true,randomD20:()=>8});assert.deepEqual(r.attackRoll,[8]);assert.equal(r.hit,false);});
+test("invalid dice and die results are rejected",()=>{assert.throws(()=>resolveAttack({attackBonus:0,targetArmorClass:10,damageDice:"bad",randomD20:()=>10}),TypeError);assert.throws(()=>resolveAttack({attackBonus:0,targetArmorClass:10,damageDice:"1d6",randomD20:()=>10,randomDamageDie:()=>7}),RangeError);});
