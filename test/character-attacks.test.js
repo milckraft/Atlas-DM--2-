@@ -28,3 +28,20 @@ test("invalid character, weapon and proficiency are rejected", () => {
   assert.throws(() => buildWeaponAttackProfile({ character, weapon: { damageDice: "1d6", isRanged: false }, proficient: true }), TypeError);
   assert.throws(() => buildWeaponAttackProfile({ character, weapon: { damageDice: "1d6", isRanged: false, hasFinesse: false }, proficient: "yes" }), TypeError);
 });
+
+import { resolveCharacterWeaponAttack } from "../src/combat/character-attacks.js";
+
+test("character weapon attack composes profile, d20 and damage resolution", () => {
+  const result = resolveCharacterWeaponAttack({
+    character,
+    weapon: { damageDice: "1d6", isRanged: false, hasFinesse: true },
+    proficient: true,
+    targetArmorClass: 15,
+    randomD20: () => 11,
+    randomDamageDie: () => 4
+  });
+  assert.equal(result.profile.ability, "DEX");
+  assert.equal(result.attackBonus, 7);
+  assert.equal(result.hit, true);
+  assert.equal(result.damage.total, 8);
+});
