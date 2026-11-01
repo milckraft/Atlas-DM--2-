@@ -5,7 +5,8 @@ import { createCharacterFromChoices } from "../src/characters/character-creation
 const base = {
   name: "Lira",
   playerId: "player-1",
-  class: "rogue",\n  classSkillChoices: ["acrobatics", "deception", "investigation", "sleightOfHand"],
+  class: "rogue",
+  classSkillChoices: ["acrobatics", "deception", "investigation", "sleightOfHand"],
   background: "wayfarer",
   species: "elf",
   baseAbilityScores: { STR: 8, DEX: 15, CON: 13, INT: 12, WIS: 14, CHA: 10 },
@@ -21,7 +22,8 @@ test("integra trasfondo, especie, matriz estándar y aumentos", () => {
   assert.equal(result.valid, true);
   assert.equal(result.character.abilities.DEX, 17);
   assert.equal(result.character.abilities.WIS, 15);
-  assert.deepEqual(result.character.proficiencies.skills, ["insight", "stealth", "perception", "acrobatics", "deception", "investigation", "sleightOfHand"]);\n  assert.deepEqual(result.character.proficiencies.savingThrows, ["dexterity", "intelligence"]);\n  assert.equal(result.character.hitPoints.maximum, 9);\n  assert.equal(result.character.proficiencyBonus, 2);
+  assert.deepEqual(result.character.proficiencies.skills, ["insight", "stealth", "perception", "acrobatics", "deception", "investigation", "sleightOfHand"]);
+  assert.deepEqual(result.character.proficiencies.savingThrows, ["dexterity", "intelligence"]);\n  assert.equal(result.character.hitPoints.maximum, 9);\n  assert.equal(result.character.proficiencyBonus, 2);
   assert.equal(result.character.speed, 9);
   assert.equal(result.character.creationStatus, "draft_pending_class_rules");
 });
