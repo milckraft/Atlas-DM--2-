@@ -13,12 +13,13 @@ test("catalogue has unique identifiers and explicit verification states", () => 
 
 test("rule search finds relevant entries", () => {
   assert.equal(searchRules("ventaja").at(0).id, "d20-roll-modes");
+  assert.equal(searchRules("modificador de característica")[0].id, "ability-modifier");
   assert.equal(searchRules("").length, 0);
 });
 
 test("explanations preserve partial verification status", () => {
   assert.equal(explainRule("ataque furtivo").status, "partial_engine");
-  assert.equal(explainRule("ataque furtivo", { detail: "detailed" }).canBePresentedAsOfficialCompleteRule, false);
+  assert.equal(explainRule("ataque furtivo", { detail: "detailed" }).isEngineImplemented, false);
   assert.equal(explainRule("unknown"), null);
   assert.throws(() => explainRule("d20", { detail: "long" }), RangeError);
 });
