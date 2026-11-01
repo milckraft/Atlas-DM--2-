@@ -1,4 +1,5 @@
 import { abilityModifier, proficiencyBonus } from "../rules/checks.js";
+import { resolveAttack } from "./attack-resolution.js";
 
 /**
  * Builds a weapon attack modifier from explicit character and weapon facts.
@@ -42,4 +43,31 @@ export function buildWeaponAttackProfile({
     damageModifier: modifier,
     proficient
   });
+}
+
+/**
+ * Resolves a weapon attack using the character-derived profile.
+ * This composes calculations only; action economy and class features remain external.
+ */
+export function resolveCharacterWeaponAttack({
+  character,
+  weapon,
+  proficient,
+  targetArmorClass,
+  advantage = false,
+  disadvantage = false,
+  randomD20,
+  randomDamageDie
+}) {
+  const profile = buildWeaponAttackProfile({ character, weapon, proficient });
+  const result = resolveAttack({
+    attackBonus: profile.attackBonus,
+    targetArmorClass,
+    damageDice: profile.damageDice,
+    advantage,
+    disadvantage,
+    ...(randomD20 ? { randomD20 } : {}),
+    ...(randomDamageDie ? { randomDamageDie } : {})
+  });
+  return Object.freeze({ ...result, profile });
 }
