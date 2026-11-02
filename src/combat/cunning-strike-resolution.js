@@ -30,14 +30,19 @@ export function resolveCunningStrike({
     return Object.freeze({ applied: false, reason: validation.reason, validation, diceSpent: 0, outcomes: Object.freeze([]) });
   }
 
-  const saveDc = calculateCunningStrikeSaveDc({ dexterityScore, rogueLevel: level });
+  const invalidTarget = validation.effects.find(option =>
+    option.targetSize === "large-or-smaller" &&
+    SIZE_ORDER.indexOf(targetSize) > SIZE_ORDER.indexOf("large")
+  );
+  if (invalidTarget) {
+    return Object.freeze({ applied: false, reason: "target-too-large", diceSpent: 0, outcomes: Object.freeze([]) });
+  }
+  const hasSavingThrow = validation.effects.some(option => option.save);
+  const saveDc = hasSavingThrow
+    ? calculateCunningStrikeSaveDc({ dexterityScore, rogueLevel: level })
+    : null;
   const outcomes = [];
   for (const option of validation.effects) {
-    if (option.targetSize === "large-or-smaller" &&
-        SIZE_ORDER.indexOf(targetSize) > SIZE_ORDER.indexOf("large")) {
-      outcomes.push(Object.freeze({ id: option.id, applied: false, reason: "target-too-large" }));
-      continue;
-    }
     if (!option.save) {
       outcomes.push(Object.freeze({
         id: option.id, applied: true,
