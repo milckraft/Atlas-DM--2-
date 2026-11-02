@@ -1,5 +1,15 @@
-import { Client, Events, GatewayIntentBits } from "discord.js";
+import { Client, Events, GatewayIntentBits, REST, Routes } from "discord.js";
 import { env } from "./config/env.js";
+import { commands } from "./commands/registry.js";
+
+// Register slash commands before connecting the bot.
+const rest = new REST({ version: "10" }).setToken(env.discordToken);
+const commandRoute = env.discordGuildId
+  ? Routes.applicationGuildCommands(env.discordClientId, env.discordGuildId)
+  : Routes.applicationCommands(env.discordClientId);
+
+await rest.put(commandRoute, { body: commands });
+console.log(`Registrados ${commands.length} comandos de Atlas DM.`);
 
 const client = new Client({
   intents: [GatewayIntentBits.Guilds]
