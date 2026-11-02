@@ -61,10 +61,10 @@ client.on(Events.InteractionCreate, async (interaction) => {
       const classId = interaction.options.getString("clase");
       const recommendations = recommendBackgrounds({ story, classId });
       const lines = recommendations.map((item, index) =>
-        `${index + 1}. **${item.name}** — coincidencia ${item.confidence} (puntuación ${item.score})\\n   ${item.reasons.length ? item.reasons.join("; ") : "Coincidencia general; faltan detalles para afinar."}`
+        `${index + 1}. **${item.name}** — coincidencia ${item.confidence} (puntuación ${item.score})\n   ${item.reasons.length ? item.reasons.join("; ") : "Coincidencia general; faltan detalles para afinar."}`
       );
       await interaction.reply({
-        content: "**Trasfondos recomendados**\\n" + lines.join("\\n") + "\\n\\nLa recomendación es orientativa: puedes elegir cualquier trasfondo.",
+        content: "**Trasfondos recomendados**\n" + lines.join("\n") + "\n\nLa recomendación es orientativa: puedes elegir cualquier trasfondo.",
         ephemeral: true
       });
       return;
