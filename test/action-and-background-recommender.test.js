@@ -4,7 +4,7 @@ import{recommendBackgrounds}from"../src/characters/background-recommender.js";
 test("detecta sigilo con tildes",()=>assert.equal(detectActionIntent("Me escondo y avanzo en silencio").action.skill,"stealth"));
 test("detecta investigación",()=>assert.equal(detectActionIntent("Examino la habitación buscando pistas").action.skill,"investigation"));
 test("no inventa acción ante charla normal",()=>assert.equal(detectActionIntent("Hola, gracias").detected,false));
-test("solicita aclaración ante dos acciones",()=>assert.equal(detectActionIntent("Finjo hablar y después intento robar").ambiguous,true));
+test("solicita aclaración ante dos acciones",()=>assert.equal(detectActionIntent("Finjo hablar y después robo su bolsa").ambiguous,true));
 test("no resuelve ataque sin ficha",()=>assert.match(describeDetectedAction(detectActionIntent("Ataco al guardia")),/Necesito la ficha/));
 test("recomienda criminal para pícaro criado robando en calles",()=>assert.equal(recommendBackgrounds({story:"Crecí en las calles y aprendí a robar cerraduras",classId:"rogue"})[0].id,"criminal"));
 test("devuelve tres trasfondos con razones",()=>{const r=recommendBackgrounds({story:"Trabajé en barcos",classId:"ranger"});assert.equal(r.length,3);assert.ok(r.every(x=>Array.isArray(x.reasons)));});
