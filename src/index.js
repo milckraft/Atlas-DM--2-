@@ -105,7 +105,16 @@ client.on(Events.InteractionCreate, async (interaction) => {
   }
 });
 
-client.on(Events.MessageCreate, async (message) => {\n  if (message.author.bot || !message.guild || !message.content.trim()) return;\n  const result = detectActionIntent(message.content);\n  if (result.detected) await message.reply(describeDetectedAction(result));\n  else if (result.ambiguous) await message.reply("Detecté varias acciones posibles: " + result.candidates.map(item => item.label).join(", ") + ". ¿Cuál intentas primero?");\n});\n\nclient.on(Events.Error, (error) => {
+client.on(Events.MessageCreate, async (message) => {
+  if (message.author.bot || !message.guild || !message.content.trim()) return;
+  const result = detectActionIntent(message.content);
+  if (result.detected) await message.reply(describeDetectedAction(result));
+  else if (result.ambiguous) {
+    await message.reply("Detecté varias acciones posibles: " + result.candidates.map(item => item.label).join(", ") + ". ¿Cuál intentas primero?");
+  }
+});
+
+client.on(Events.Error, (error) => {
   console.error("Error del cliente de Discord:", error);
 });
 
