@@ -55,7 +55,7 @@ test("Tropiezo cannot target a creature larger than Large", () => {
 
 test("Veneno requires the target Constitution save modifier", () => {
   assert.throws(() => resolveCunningStrike({
-    ...base, effects: ["veneno"], targetSavingThrowBonuses: {}
+    ...base, effects: ["veneno"], carriedTools: ["poisoners-kit"], targetSavingThrowBonuses: {}
   }), TypeError);
 });
 
