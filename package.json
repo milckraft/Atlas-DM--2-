@@ -8,7 +8,7 @@
   "scripts": {
     "start": "node src/index.js",
     "deploy:commands": "node src/deploy-commands.js",
-    "check": "find src test -name '*.js' -type f -exec node --check {} \;",
+    "check": "find src test -name '*.js' -type f -print0 | xargs -0 -n1 node --check",
     "test": "node --test"
   },
   "dependencies": { "discord.js": "^14.27.0", "dotenv": "^16.4.7" }
