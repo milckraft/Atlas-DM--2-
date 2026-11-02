@@ -90,7 +90,8 @@ export function appendCampaignEvent(state, event) {
     actorId: event.actorId ?? null,
     source: event.source ?? "campaign",
     confirmedBy: event.confirmedBy ?? null,
-    canonRefs: event.canonRefs ?? []
+    canonRefs: event.canonRefs ?? [],
+    roll: event.roll ?? null
   });
   if (next.events.length > MAX_EVENTS) next.events = next.events.slice(-MAX_EVENTS);
   next.updatedAt = new Date().toISOString();
