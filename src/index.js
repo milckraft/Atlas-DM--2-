@@ -91,7 +91,8 @@ client.on(Events.InteractionCreate, async interaction => {
           await campaignStore.save(result.state);
           await interaction.editReply("Acontecimiento confirmado y añadido al registro oficial de esta campaña. Esto no modifica automáticamente el canon original de Edrava.");
           return;
-        }\n        if (action === "registrar") {
+        }
+        if (action === "registrar") {
           const updated = appendCampaignEvent(state, {
             type: "player-note",
             source: "player_reported",
