@@ -12,6 +12,7 @@ import { commands } from "./commands/registry.js";
 import { rollD20 } from "./rules/dice.js";
 import { listClassEntries } from "./characters/class-catalogue.js";
 import { detectActionIntent, describeDetectedAction } from "./ai/action-intent.js";
+import { recommendBackgrounds } from "./characters/background-recommender.js";
 
 const rest = new REST({ version: "10" }).setToken(env.discordToken);
 const commandRoute = env.discordGuildId
@@ -52,6 +53,20 @@ client.on(Events.InteractionCreate, async (interaction) => {
         `🎲 **${modeText}**\nResultado: **${result.kept}**` +
         (result.rolls.length > 1 ? ` (dados: ${result.rolls.join(" y ")})` : "")
       );
+      return;
+    }
+
+    if (interaction.commandName === "recomendar_trasfondo") {
+      const story = interaction.options.getString("historia", true);
+      const classId = interaction.options.getString("clase");
+      const recommendations = recommendBackgrounds({ story, classId });
+      const lines = recommendations.map((item, index) =>
+        `${index + 1}. **${item.name}** — coincidencia ${item.confidence} (puntuación ${item.score})\\n   ${item.reasons.length ? item.reasons.join("; ") : "Coincidencia general; faltan detalles para afinar."}`
+      );
+      await interaction.reply({
+        content: "**Trasfondos recomendados**\\n" + lines.join("\\n") + "\\n\\nLa recomendación es orientativa: puedes elegir cualquier trasfondo.",
+        ephemeral: true
+      });
       return;
     }
 
