@@ -11,6 +11,7 @@ import { env } from "./config/env.js";
 import { commands } from "./commands/registry.js";
 import { rollD20 } from "./rules/dice.js";
 import { listClassEntries } from "./characters/class-catalogue.js";
+import { detectActionIntent, describeDetectedAction } from "./ai/action-intent.js";
 
 const rest = new REST({ version: "10" }).setToken(env.discordToken);
 const commandRoute = env.discordGuildId
@@ -21,7 +22,7 @@ await rest.put(commandRoute, { body: commands });
 console.log(`Registrados ${commands.length} comandos de Atlas DM.`);
 
 const client = new Client({
-  intents: [GatewayIntentBits.Guilds]
+  intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent]
 });
 
 client.once(Events.ClientReady, (readyClient) => {
@@ -104,7 +105,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
   }
 });
 
-client.on(Events.Error, (error) => {
+client.on(Events.MessageCreate, async (message) => {\n  if (message.author.bot || !message.guild || !message.content.trim()) return;\n  const result = detectActionIntent(message.content);\n  if (result.detected) await message.reply(describeDetectedAction(result));\n  else if (result.ambiguous) await message.reply("Detecté varias acciones posibles: " + result.candidates.map(item => item.label).join(", ") + ". ¿Cuál intentas primero?");\n});\n\nclient.on(Events.Error, (error) => {
   console.error("Error del cliente de Discord:", error);
 });
 
