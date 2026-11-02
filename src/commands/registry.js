@@ -19,5 +19,9 @@ export const commands = [
           { name: "Desventaja", value: "disadvantage" }
         )
     )
+    .toJSON(),
+  new SlashCommandBuilder()
+    .setName("crear_personaje")
+    .setDescription("Comienza la creación guiada de tu personaje.")
     .toJSON()
 ];
