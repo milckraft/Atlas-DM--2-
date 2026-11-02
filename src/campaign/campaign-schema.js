@@ -41,7 +41,20 @@ function normalizeEvents(events) {
       if (value.kept !== expected) throw new TypeError("El resultado conservado no coincide con los dados.");
       return { mode: value.mode, rolls: [...value.rolls], kept: value.kept };
     })();
-    if (source === "engine" && (!roll || event.type !== "dice-roll")) throw new TypeError("Los eventos del motor deben contener una tirada válida.");
+    const check = event.check == null ? null : (() => {
+      const value = event.check;
+      if (!value || value.type !== "ability_check" || !["STR", "DEX", "CON", "INT", "WIS", "CHA"].includes(value.ability) ||
+          !Number.isInteger(value.total) || !Number.isInteger(value.dc) || value.dc < 0 ||
+          typeof value.success !== "boolean" || typeof value.proficient !== "boolean" ||
+          !Number.isInteger(value.abilityModifier) || !Number.isInteger(value.proficiencyBonus) ||
+          typeof value.skill !== "string" || !value.skill.trim()) throw new TypeError("Datos de prueba de habilidad no válidos.");
+      return { type: value.type, ability: value.ability, skill: value.skill, total: value.total, dc: value.dc,
+        success: value.success, proficient: value.proficient, abilityModifier: value.abilityModifier,
+        proficiencyBonus: value.proficiencyBonus };
+    })();
+    if (source === "engine" && !((roll && event.type === "dice-roll") || (roll && check && event.type === "ability-check"))) {
+      throw new TypeError("Los eventos del motor deben contener una tirada o prueba válida.");
+    }
     return {
       id: text(event.id ?? `event-${index + 1}`, "event.id", { max: 120 }),
       type: text(event.type, "event.type", { max: 80 }),
@@ -114,4 +127,16 @@ export function confirmLatestPlayerReport(state, moderatorId) {
   event.confirmedBy = text(moderatorId, "moderatorId", { max: 120 });
   next.updatedAt = new Date().toISOString();
   return { state: createCampaignState(next), confirmed: true, event };
+}
+
+export function appendAbilityCheckEvent(state, { result, actorId, characterId }) {
+  if (!result || result.type !== "ability_check" || !Array.isArray(result.rolls)) {
+    throw new TypeError("Resultado de prueba de habilidad no válido.");
+  }
+  return appendCampaignEvent(state, {
+    type: "ability-check", source: "engine", actorId,
+    summary: `${result.skill}: ${result.total} contra CD ${result.dc} — ${result.success ? "éxito" : "fallo"}`,
+    roll: { mode: result.mode, rolls: result.rolls, kept: result.kept },
+    check: { ...result, characterId }
+  });
 }
