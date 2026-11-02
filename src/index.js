@@ -1,6 +1,7 @@
 import { Client, Events, GatewayIntentBits, REST, Routes } from "discord.js";
 import { env } from "./config/env.js";
 import { commands } from "./commands/registry.js";
+import { rollD20 } from "./rules/dice.js";
 
 // Register slash commands before connecting the bot.
 const rest = new REST({ version: "10" }).setToken(env.discordToken);
@@ -27,6 +28,23 @@ client.on(Events.InteractionCreate, async (interaction) => {
       content: "¡Estoy conectado! La primera versión de Atlas DM está en construcción.",
       ephemeral: true
     });
+    return;
+  }
+
+  if (interaction.commandName === "tirar") {
+    const mode = interaction.options.getString("modo") ?? "normal";
+    const result = rollD20({ mode });
+    const diceText = result.rolls.join(" y ");
+    const modeText = {
+      normal: "Tirada normal",
+      advantage: "Ventaja",
+      disadvantage: "Desventaja"
+    }[mode];
+
+    await interaction.reply(
+      `🎲 **${modeText}**\nResultado: **${result.kept}**` +
+      (result.rolls.length > 1 ? ` (dados: ${diceText})` : "")
+    );
   }
 });
 
