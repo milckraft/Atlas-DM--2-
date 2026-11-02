@@ -78,3 +78,36 @@ test("Sneak Attack cannot be applied twice in the same global turn", () => {
   assert.equal(first.sneakAttack.applied, true);
   assert.equal(second.sneakAttack.applied, false);
 });
+
+test("Cunning Strike spends Sneak Attack dice and applies its save outcome on a hit", () => {
+  const result = resolveRogueWeaponAttack({
+    character, weapon, proficient: true, targetArmorClass: 15,
+    turnState: makeState(), allyWithin5FeetOfTarget: true,
+    cunningStrike: {
+      effects: ["tropiezo"], targetSavingThrowBonuses: { dexterity: 0 },
+      targetSize: "medium"
+    },
+    randomD20: () => 10,
+    randomDamageDie: () => 2
+  });
+  assert.equal(result.hit, true);
+  assert.equal(result.sneakAttack.diceSpent, 1);
+  assert.equal(result.sneakAttack.diceRolled, 2);
+  assert.equal(result.sneakAttack.total, 4);
+  assert.equal(result.damage.total, 10);
+  assert.equal(result.cunningStrike.applied, true);
+  assert.equal(result.cunningStrike.outcomes[0].condition, "prone");
+  assert.equal(result.turnState.sneakAttackUsed, true);
+});
+
+test("Cunning Strike is not spent when the attack misses", () => {
+  const result = resolveRogueWeaponAttack({
+    character, weapon, proficient: true, targetArmorClass: 30,
+    turnState: makeState(), allyWithin5FeetOfTarget: true,
+    cunningStrike: { effects: ["tropiezo"], targetSavingThrowBonuses: { dexterity: 0 } },
+    randomD20: () => 1, randomDamageDie: () => 2
+  });
+  assert.equal(result.cunningStrike.reason, "attack-missed");
+  assert.equal(result.sneakAttack.diceSpent, 0);
+  assert.equal(result.turnState.sneakAttackUsed, false);
+});
