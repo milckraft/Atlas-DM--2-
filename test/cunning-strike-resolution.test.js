@@ -14,7 +14,7 @@ test("failed save applies the selected condition and spends its Sneak Attack die
   assert.equal(result.applied, true);
   assert.equal(result.diceSpent, 1);
   assert.equal(result.remainingSneakAttackDice, 2);
-  assert.equal(result.saveDc, 10);
+  assert.equal(result.saveDc, 15);
   assert.equal(result.outcomes[0].saved, false);
   assert.equal(result.outcomes[0].condition, "prone");
 });
