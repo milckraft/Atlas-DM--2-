@@ -8,7 +8,7 @@ import { listClassEntries } from "./characters/class-catalogue.js";
 import { detectActionIntent, describeDetectedAction } from "./ai/action-intent.js";
 import { analyzeCharacterBackground } from "./characters/background-ai.js";
 import { createCampaignStore } from "./campaign/campaign-store.js";
-import { createCampaignState, appendCampaignEvent, confirmLatestPlayerReport } from "./campaign/campaign-schema.js";
+import { createCampaignState, appendCampaignEvent, appendDiceRollEvent, confirmLatestPlayerReport } from "./campaign/campaign-schema.js";
 
 const campaignStore = createCampaignStore();
 const rest = new REST({ version: "10" }).setToken(env.discordToken);
@@ -35,8 +35,18 @@ client.on(Events.InteractionCreate, async interaction => {
         const mode = interaction.options.getString("modo") ?? "normal";
         const result = rollD20({ mode });
         const modeText = { normal: "Tirada normal", advantage: "Ventaja", disadvantage: "Desventaja" }[mode];
-        await interaction.reply(`🎲 **${modeText}**\nResultado: **${result.kept}**` +
-          (result.rolls.length > 1 ? ` (dados: ${result.rolls.join(" y ")})` : ""));
+        let recorded = false;
+        if (interaction.guildId) {
+          const campaign = await campaignStore.get(interaction.guildId);
+          if (campaign) {
+            const updated = appendDiceRollEvent(campaign, { rollResult: result, actorId: interaction.user.id });
+            await campaignStore.save(updated);
+            recorded = true;
+          }
+        }
+        await interaction.reply(`🎲 **${modeText}**\\nResultado: **${result.kept}**` +
+          (result.rolls.length > 1 ? ` (dados: ${result.rolls.join(" y ")})` : "") +
+          (recorded ? "\\n📝 Tirada guardada en la memoria de campaña." : ""));
         return;
       }
       if (interaction.commandName === "campana") {

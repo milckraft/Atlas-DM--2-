@@ -33,7 +33,15 @@ function normalizeEvents(events) {
   return events.map((event, index) => {
     if (!event || typeof event !== "object") throw new TypeError("Evento inválido.");
     const source = event.source ?? "campaign";
-    if (!["campaign", "player_reported", "confirmed"].includes(source)) throw new TypeError("Origen de evento no válido.");
+    if (!["campaign", "player_reported", "confirmed", "engine"].includes(source)) throw new TypeError("Origen de evento no válido.");
+    const roll = event.roll == null ? null : (() => {
+      const value = event.roll;
+      if (!value || !["normal", "advantage", "disadvantage"].includes(value.mode) || !Array.isArray(value.rolls) || value.rolls.length !== (value.mode === "normal" ? 1 : 2) || value.rolls.some(n => !Number.isInteger(n) || n < 1 || n > 20) || !Number.isInteger(value.kept) || value.kept < 1 || value.kept > 20) throw new TypeError("Datos de tirada no válidos.");
+      const expected = value.mode === "advantage" ? Math.max(...value.rolls) : value.mode === "disadvantage" ? Math.min(...value.rolls) : value.rolls[0];
+      if (value.kept !== expected) throw new TypeError("El resultado conservado no coincide con los dados.");
+      return { mode: value.mode, rolls: [...value.rolls], kept: value.kept };
+    })();
+    if (source === "engine" && (!roll || event.type !== "dice-roll")) throw new TypeError("Los eventos del motor deben contener una tirada válida.");
     return {
       id: text(event.id ?? `event-${index + 1}`, "event.id", { max: 120 }),
       type: text(event.type, "event.type", { max: 80 }),
@@ -42,7 +50,8 @@ function normalizeEvents(events) {
       actorId: event.actorId == null ? null : text(event.actorId, "event.actorId", { max: 120 }),
       source,
       confirmedBy: event.confirmedBy == null ? null : text(event.confirmedBy, "event.confirmedBy", { max: 120 }),
-      canonRefs: stringArray(event.canonRefs ?? [], "event.canonRefs", 50)
+      canonRefs: stringArray(event.canonRefs ?? [], "event.canonRefs", 50),
+      roll
     };
   });
 }
@@ -87,6 +96,15 @@ export function appendCampaignEvent(state, event) {
   next.updatedAt = new Date().toISOString();
   return createCampaignState(next);
 }
+export function appendDiceRollEvent(state, { rollResult, actorId, purpose = "Tirada de d20" }) {
+  if (!rollResult || !["normal", "advantage", "disadvantage"].includes(rollResult.mode)) throw new TypeError("Resultado de tirada no válido.");
+  return appendCampaignEvent(state, {
+    type: "dice-roll", source: "engine", actorId,
+    summary: `${purpose}: ${rollResult.kept} (${rollResult.rolls.join(" y ")})`,
+    roll: rollResult
+  });
+}
+
 export function confirmLatestPlayerReport(state, moderatorId) {
   const next = createCampaignState(state);
   const event = [...next.events].reverse().find(item => item.source === "player_reported");
