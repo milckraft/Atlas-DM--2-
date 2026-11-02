@@ -1,0 +1,16 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import { validateBackgroundAnalysis, validateImageRequest } from "../src/ai/contracts.js";
+import { buildBackgroundAnalysisPrompt } from "../src/ai/prompts/background-analysis.js";
+import { registerAIProvider, requestAI } from "../src/ai/provider-registry.js";
+import { configureImageProvider, generateReferenceImage } from "../src/visual/image-service.js";
+import { validateGridMap } from "../src/maps/map-schema.js";
+import { BACKGROUND_IDS } from "../src/characters/background-catalogue.js";
+test("valida recomendaciones contra el catálogo real",()=>{const r=validateBackgroundAnalysis({summary:"Vida itinerante",recommendations:[{backgroundId:"wayfarer",reason:"Vivió viajando",storyEvidence:["Cruzó regiones"]}],needsClarification:false,questions:[]},BACKGROUND_IDS);assert.equal(r.valid,true);});
+test("rechaza trasfondos inventados",()=>{const r=validateBackgroundAnalysis({summary:"x",recommendations:[{backgroundId:"inventado",reason:"x",storyEvidence:["x"]}],needsClarification:false,questions:[]},BACKGROUND_IDS);assert.equal(r.valid,false);});
+test("el prompt exige análisis biográfico y no clase",()=>{const p=buildBackgroundAnalysisPrompt("Viajó con una caravana.");assert.match(p,/biografía completa/);assert.match(p,/No uses la clase/);});
+test("sin proveedor la IA queda explícitamente desactivada",async()=>assert.equal((await requestAI("narrative",{})).status,"unavailable"));
+test("registro de proveedor ejecuta la capacidad",async()=>{registerAIProvider("test-provider",{narrative:async x=>({answer:x.text})});assert.deepEqual(await requestAI("narrative",{text:"hola"},{providerName:"test-provider"}),{status:"ok",data:{answer:"hola"}});});
+test("valida solicitud de imagen",()=>assert.equal(validateImageRequest({prompt:"Una posada medieval"}),true));
+test("sin proveedor visual no simula imagen",async()=>{configureImageProvider(null);assert.equal((await generateReferenceImage({prompt:"Castillo"})).status,"unavailable");});
+test("valida mapas estructurados",()=>assert.equal(validateGridMap({width:4,height:4,tiles:Array.from({length:4},()=>Array(4).fill("floor"))}).valid,true));
