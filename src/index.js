@@ -1,5 +1,5 @@
 import {
-  ActionRowBuilder, Client, Events, GatewayIntentBits, REST, Routes, StringSelectMenuBuilder
+  ActionRowBuilder, Client, Events, GatewayIntentBits, PermissionFlagsBits, REST, Routes, StringSelectMenuBuilder
 } from "discord.js";
 import { env } from "./config/env.js";
 import { commands } from "./commands/registry.js";
@@ -8,7 +8,7 @@ import { listClassEntries } from "./characters/class-catalogue.js";
 import { detectActionIntent, describeDetectedAction } from "./ai/action-intent.js";
 import { analyzeCharacterBackground } from "./characters/background-ai.js";
 import { createCampaignStore } from "./campaign/campaign-store.js";
-import { createCampaignState, appendCampaignEvent } from "./campaign/campaign-schema.js";
+import { createCampaignState, appendCampaignEvent, confirmLatestPlayerReport } from "./campaign/campaign-schema.js";
 
 const campaignStore = createCampaignStore();
 const rest = new REST({ version: "10" }).setToken(env.discordToken);
@@ -78,7 +78,7 @@ client.on(Events.InteractionCreate, async interaction => {
           );
           return;
         }
-        if (action === "registrar") {
+        if (action === "confirmar") {\n          if (!interaction.memberPermissions?.has(PermissionFlagsBits.ManageGuild)) {\n            await interaction.editReply("Solo alguien con el permiso Gestionar servidor puede confirmar acontecimientos.");\n            return;\n          }\n          const result = confirmLatestPlayerReport(state, interaction.user.id);\n          if (!result.confirmed) {\n            await interaction.editReply("No hay aportes de jugadores pendientes de confirmación.");\n            return;\n          }\n          await campaignStore.save(result.state);\n          await interaction.editReply("Acontecimiento confirmado y añadido al registro oficial de esta campaña. Esto no modifica automáticamente el canon original de Edrava.");\n          return;\n        }\n        if (action === "registrar") {
           const updated = appendCampaignEvent(state, {
             type: "player-note",
             source: "player_reported",

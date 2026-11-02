@@ -4,20 +4,48 @@ const MAX_TEXT = 8000;
 
 function text(value, field, { optional = false, max = MAX_TEXT } = {}) {
   if (optional && value == null) return null;
-  if (typeof value !== "string" || !value.trim() || value.length > max) {
-    throw new TypeError(`${field} debe ser texto no vacío de hasta ${max} caracteres.`);
-  }
+  if (typeof value !== "string" || !value.trim() || value.length > max) throw new TypeError(`${field} debe ser texto no vacío de hasta ${max} caracteres.`);
   return value.trim();
 }
-
 function stringArray(value, field, maxItems = 100) {
-  if (!Array.isArray(value) || value.length > maxItems ||
-      value.some(item => typeof item !== "string" || !item.trim() || item.length > 500)) {
-    throw new TypeError(`${field} debe ser una lista válida de textos.`);
-  }
+  if (!Array.isArray(value) || value.length > maxItems || value.some(item => typeof item !== "string" || !item.trim() || item.length > 500)) throw new TypeError(`${field} debe ser una lista válida de textos.`);
   return [...new Set(value.map(item => item.trim()))];
 }
-
+function normalizeRecords(records, field) {
+  if (!Array.isArray(records) || records.length > 1000) throw new TypeError(`${field} debe ser una lista de registros.`);
+  const ids = new Set();
+  return records.map(record => {
+    if (!record || typeof record !== "object" || Array.isArray(record)) throw new TypeError(`Registro inválido en ${field}.`);
+    const id = text(record.id, `${field}.id`, { max: 120 });
+    if (ids.has(id)) throw new TypeError(`ID duplicado en ${field}: ${id}`);
+    ids.add(id);
+    return { ...record, id };
+  });
+}
+function normalizeFlags(flags) {
+  if (!flags || typeof flags !== "object" || Array.isArray(flags)) throw new TypeError("flags debe ser un objeto.");
+  const entries = Object.entries(flags);
+  if (entries.length > 500 || entries.some(([key, value]) => !key.trim() || key.length > 120 || !["string", "number", "boolean"].includes(typeof value))) throw new TypeError("flags contiene valores no admitidos.");
+  return Object.fromEntries(entries);
+}
+function normalizeEvents(events) {
+  if (!Array.isArray(events)) throw new TypeError("events debe ser una lista.");
+  return events.map((event, index) => {
+    if (!event || typeof event !== "object") throw new TypeError("Evento inválido.");
+    const source = event.source ?? "campaign";
+    if (!["campaign", "player_reported", "confirmed"].includes(source)) throw new TypeError("Origen de evento no válido.");
+    return {
+      id: text(event.id ?? `event-${index + 1}`, "event.id", { max: 120 }),
+      type: text(event.type, "event.type", { max: 80 }),
+      summary: text(event.summary, "event.summary", { max: 1000 }),
+      occurredAt: event.occurredAt ?? new Date().toISOString(),
+      actorId: event.actorId == null ? null : text(event.actorId, "event.actorId", { max: 120 }),
+      source,
+      confirmedBy: event.confirmedBy == null ? null : text(event.confirmedBy, "event.confirmedBy", { max: 120 }),
+      canonRefs: stringArray(event.canonRefs ?? [], "event.canonRefs", 50)
+    };
+  });
+}
 export function createCampaignState(input = {}) {
   const now = new Date().toISOString();
   const state = {
@@ -29,7 +57,6 @@ export function createCampaignState(input = {}) {
     createdAt: input.createdAt ?? now,
     updatedAt: input.updatedAt ?? now,
     canonVersion: input.canonVersion ?? "1",
-    // Immutable world facts are referenced by IDs; campaign changes live separately.
     canonRefs: stringArray(input.canonRefs ?? [], "canonRefs"),
     players: normalizeRecords(input.players ?? [], "players"),
     characters: normalizeRecords(input.characters ?? [], "characters"),
@@ -44,46 +71,6 @@ export function createCampaignState(input = {}) {
   if (state.events.length > MAX_EVENTS) throw new RangeError("La campaña supera el máximo de eventos.");
   return state;
 }
-
-function normalizeRecords(records, field) {
-  if (!Array.isArray(records) || records.length > 1000) throw new TypeError(`${field} debe ser una lista de registros.`);
-  const ids = new Set();
-  return records.map((record) => {
-    if (!record || typeof record !== "object" || Array.isArray(record)) throw new TypeError(`Registro inválido en ${field}.`);
-    const id = text(record.id, `${field}.id`, { max: 120 });
-    if (ids.has(id)) throw new TypeError(`ID duplicado en ${field}: ${id}`);
-    ids.add(id);
-    return { ...record, id };
-  });
-}
-
-function normalizeFlags(flags) {
-  if (!flags || typeof flags !== "object" || Array.isArray(flags)) throw new TypeError("flags debe ser un objeto.");
-  const entries = Object.entries(flags);
-  if (entries.length > 500 || entries.some(([key, value]) =>
-    !key.trim() || key.length > 120 || !["string", "number", "boolean"].includes(typeof value))) {
-    throw new TypeError("flags contiene valores no admitidos.");
-  }
-  return Object.fromEntries(entries);
-}
-
-function normalizeEvents(events) {
-  if (!Array.isArray(events)) throw new TypeError("events debe ser una lista.");
-  return events.map((event, index) => {
-    if (!event || typeof event !== "object") throw new TypeError("Evento inválido.");
-    return {
-      id: text(event.id ?? `event-${index + 1}`, "event.id", { max: 120 }),
-      type: text(event.type, "event.type", { max: 80 }),
-      summary: text(event.summary, "event.summary", { max: 1000 }),
-      occurredAt: event.occurredAt ?? new Date().toISOString(),
-      actorId: event.actorId == null ? null : text(event.actorId, "event.actorId", { max: 120 }),
-      // The source label makes it explicit whether this is canon or play-state.
-      source: event.source ?? "campaign",
-      canonRefs: stringArray(event.canonRefs ?? [], "event.canonRefs", 50)
-    };
-  });
-}
-
 export function appendCampaignEvent(state, event) {
   const next = createCampaignState(state);
   next.events.push({
@@ -93,9 +80,19 @@ export function appendCampaignEvent(state, event) {
     occurredAt: event.occurredAt ?? new Date().toISOString(),
     actorId: event.actorId ?? null,
     source: event.source ?? "campaign",
+    confirmedBy: event.confirmedBy ?? null,
     canonRefs: event.canonRefs ?? []
   });
   if (next.events.length > MAX_EVENTS) next.events = next.events.slice(-MAX_EVENTS);
   next.updatedAt = new Date().toISOString();
   return createCampaignState(next);
+}
+export function confirmLatestPlayerReport(state, moderatorId) {
+  const next = createCampaignState(state);
+  const event = [...next.events].reverse().find(item => item.source === "player_reported");
+  if (!event) return { state: next, confirmed: false };
+  event.source = "confirmed";
+  event.confirmedBy = text(moderatorId, "moderatorId", { max: 120 });
+  next.updatedAt = new Date().toISOString();
+  return { state: createCampaignState(next), confirmed: true, event };
 }
