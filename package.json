@@ -4,17 +4,12 @@
   "private": true,
   "description": "AI Dungeon Master for Discord with a deterministic D&D 2024 rules core.",
   "type": "module",
-  "engines": {
-    "node": ">=20"
-  },
+  "engines": { "node": ">=20" },
   "scripts": {
     "start": "node src/index.js",
     "deploy:commands": "node src/deploy-commands.js",
-    "check": "find src test -name '*.js' -type f -exec node --check {} \\;",
+    "check": "find src test -name '*.js' -type f -exec node --check {} \;",
     "test": "node --test"
   },
-  "dependencies": {
-    "discord.js": "^14.27.0",
-    "dotenv": "^16.4.7"
-  }
+  "dependencies": { "discord.js": "^14.27.0", "dotenv": "^16.4.7" }
 }
