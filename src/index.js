@@ -12,7 +12,7 @@ import { commands } from "./commands/registry.js";
 import { rollD20 } from "./rules/dice.js";
 import { listClassEntries } from "./characters/class-catalogue.js";
 import { detectActionIntent, describeDetectedAction } from "./ai/action-intent.js";
-import { recommendBackgrounds } from "./characters/background-recommender.js";
+import { analyzeCharacterBackground } from "./characters/background-ai.js";
 
 const rest = new REST({ version: "10" }).setToken(env.discordToken);
 const commandRoute = env.discordGuildId
@@ -57,16 +57,39 @@ client.on(Events.InteractionCreate, async (interaction) => {
     }
 
     if (interaction.commandName === "recomendar_trasfondo") {
+      await interaction.deferReply({ ephemeral: true });
       const story = interaction.options.getString("historia", true);
-      const classId = interaction.options.getString("clase");
-      const recommendations = recommendBackgrounds({ story, classId });
-      const lines = recommendations.map((item, index) =>
-        `${index + 1}. **${item.name}** — coincidencia ${item.confidence} (puntuación ${item.score})\n   ${item.reasons.length ? item.reasons.join("; ") : "Coincidencia general; faltan detalles para afinar."}`
-      );
-      await interaction.reply({
-        content: "**Trasfondos recomendados**\n" + lines.join("\n") + "\n\nLa recomendación es orientativa: puedes elegir cualquier trasfondo.",
-        ephemeral: true
+      const result = await analyzeCharacterBackground(story);
+
+      if (result.status === "insufficient_story") {
+        await interaction.editReply(result.message);
+        return;
+      }
+      if (result.status === "unavailable") {
+        await interaction.editReply(
+          "El análisis narrativo todavía no está disponible: no hay un proveedor de IA configurado. " +
+          "No voy a sustituirlo por una puntuación de palabras clave. Puedes elegir cualquier trasfondo del catálogo mientras tanto."
+        );
+        return;
+      }
+      if (result.status !== "ok") {
+        await interaction.editReply(
+          "No pude validar una recomendación fiable esta vez. Tu historia y tu personaje no se han modificado; inténtalo más tarde."
+        );
+        return;
+      }
+
+      const analysis = result.analysis;
+      const lines = analysis.recommendations.map((item, index) => {
+        const evidence = item.storyEvidence.map(point => `• ${point}`).join("\n");
+        return `**${index + 1}. ${item.backgroundId}**\n${item.reason}${evidence ? `\n${evidence}` : ""}`;
       });
+      const clarification = analysis.needsClarification && analysis.questions.length
+        ? `\n\n**Para afinar el análisis:**\n${analysis.questions.map(question => `• ${question}`).join("\n")}`
+        : "";
+      await interaction.editReply(
+        `**Análisis narrativo del trasfondo**\n${analysis.summary}\n\n${lines.join("\n\n")}${clarification}\n\nLa recomendación es orientativa: tú decides qué trasfondo encaja mejor.`
+      );
       return;
     }
 
