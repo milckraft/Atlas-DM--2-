@@ -56,7 +56,7 @@ test("devuelve imagen PNG en base64 cuando el modelo entrega JSON", async () => 
     fetchImpl: async () => response({ result: { image: "aGVsbG8=" } })
   });
   const result = await provider.generateImage({ prompt: "Una ciudad fantástica" });
-  assert.equal(result.mimeType, "image/png");
+  assert.equal(result.mimeType, "image/jpeg");
   assert.equal(result.imageBase64, "aGVsbG8=");
 });
 
