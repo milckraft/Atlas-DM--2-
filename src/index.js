@@ -8,10 +8,21 @@ import { listClassEntries } from "./characters/class-catalogue.js";
 import { detectActionIntent, describeDetectedAction } from "./ai/action-intent.js";
 import { classifyDiscordMessage, createConversationContextStore } from "./ai/conversation-context.js";
 import { analyzeCharacterBackground } from "./characters/background-ai.js";
+import { registerAIProvider } from "./ai/provider-registry.js";
+import { createCloudflareWorkersAIProvider } from "./ai/cloudflare-workers-ai.js";
 import { createCampaignStore } from "./campaign/campaign-store.js";
 import { createCampaignState, appendCampaignEvent, appendDiceRollEvent, confirmLatestPlayerReport } from "./campaign/campaign-schema.js";
 
 const campaignStore = createCampaignStore();
+if (process.env.CLOUDFLARE_ACCOUNT_ID && process.env.CLOUDFLARE_API_TOKEN) {
+  registerAIProvider("cloudflare", createCloudflareWorkersAIProvider({
+    accountId: process.env.CLOUDFLARE_ACCOUNT_ID,
+    apiToken: process.env.CLOUDFLARE_API_TOKEN,
+    textModel: process.env.CLOUDFLARE_TEXT_MODEL,
+    imageModel: process.env.CLOUDFLARE_IMAGE_MODEL
+  }));
+  console.log("Proveedor Cloudflare Workers AI registrado.");
+}
 const conversationContext = createConversationContextStore({ maxMessagesPerChannel: 30, maxChannels: 100 });
 const rest = new REST({ version: "10" }).setToken(env.discordToken);
 const commandRoute = env.discordGuildId
