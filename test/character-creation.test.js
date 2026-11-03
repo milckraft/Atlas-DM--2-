@@ -105,3 +105,19 @@ test("la creación exige las habilidades válidas de la clase", () => {
   assert.equal(unavailable.valid, false);
   assert.ok(unavailable.errors.some(error => error.includes("no está disponible")));
 });
+
+test("mantiene la biografía y personalidad al crear la ficha", () => {
+  const result = createCharacterFromChoices({
+    ...base,
+    backstory: "Fue criada por una compañía de mercaderes ambulantes.",
+    personality: "Prudente",
+    ideals: "La familia elegida",
+    bonds: "Su mentora",
+    flaws: "Le cuesta confiar",
+    goals: ["Encontrar su hogar"]
+  });
+  assert.equal(result.valid, true);
+  assert.match(result.character.backstory, /mercaderes ambulantes/);
+  assert.equal(result.character.personality, "Prudente");
+  assert.deepEqual(result.character.goals, ["Encontrar su hogar"]);
+});
