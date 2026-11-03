@@ -205,8 +205,7 @@ client.on(Events.MessageCreate, async message => {
     const payload = buildConversationPayload({
       campaign,
       messages: recentMessages,
-      addressedToDM: routing.kind === "addressed_to_dm",
-      currentAuthorId: message.author.id
+      addressedToDM: routing.kind === "addressed_to_dm"
     });
     const result = await decideCampaignConversation(provider, payload);
     if (result.status !== "ok") return;
