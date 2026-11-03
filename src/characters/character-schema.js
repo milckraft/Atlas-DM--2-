@@ -30,6 +30,14 @@ export function createCharacterDraft(input) {
     subclass: input.subclass ?? null,
     background: requiredText(input.background, "background"),
     species: requiredText(input.species, "species"),
+    backstory: optionalText(input.backstory, "backstory", 5000),
+    personality: optionalText(input.personality, "personality", 1000),
+    ideals: optionalText(input.ideals, "ideals", 1000),
+    bonds: optionalText(input.bonds, "bonds", 1000),
+    flaws: optionalText(input.flaws, "flaws", 1000),
+    goals: optionalStringList(input.goals, "goals", 12),
+    relationships: optionalStringList(input.relationships, "relationships", 12),
+    roleplayNotes: optionalText(input.roleplayNotes, "roleplayNotes", 1500),
     abilities: { ...input.abilities },
     abilityChoices: input.abilityChoices ?? null,
     languages: uniqueStrings(input.languages ?? []),
@@ -79,6 +87,14 @@ export function validateCharacterDraft(character) {
   if (!Array.isArray(character.languages)) {
     throw new TypeError("languages debe ser una lista.");
   }
+  for (const field of ["backstory", "personality", "ideals", "bonds", "flaws", "roleplayNotes"]) {
+    if (character[field] != null && typeof character[field] !== "string") throw new TypeError(field + " debe ser texto.");
+  }
+  for (const field of ["goals", "relationships"]) {
+    if (character[field] != null && (!Array.isArray(character[field]) || character[field].some(value => typeof value !== "string"))) {
+      throw new TypeError(field + " debe ser una lista de textos.");
+    }
+  }
 
   return true;
 }
@@ -95,4 +111,18 @@ function uniqueStrings(values) {
     throw new TypeError("Se esperaba una lista de textos no vacíos.");
   }
   return [...new Set(values.map(value => value.trim()))];
+}
+
+function optionalText(value, field, max) {
+  if (value == null || value === "") return null;
+  if (typeof value !== "string" || value.length > max) throw new TypeError(field + " debe ser texto de hasta " + max + " caracteres.");
+  return value.trim() || null;
+}
+
+function optionalStringList(value, field, maxItems) {
+  if (value == null) return [];
+  if (!Array.isArray(value) || value.length > maxItems || value.some(item => typeof item !== "string" || item.length > 300)) {
+    throw new TypeError(field + " debe ser una lista de hasta " + maxItems + " textos.");
+  }
+  return [...new Set(value.map(item => item.trim()).filter(Boolean))];
 }
