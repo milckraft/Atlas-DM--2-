@@ -275,7 +275,10 @@ client.on(Events.MessageCreate, async message => {
       replyToAuthorName: message.referencedMessage?.member?.displayName ?? message.referencedMessage?.author?.username ?? null,
       mentions: [...message.mentions.users.values()].map(user => user.globalName ?? user.username)
     });
-    if (!conversationRateLimiter.allow(message.channelId, { addressedToDM: routing.kind === "addressed_to_dm" })) return;
+    if (!conversationRateLimiter.allow(message.channelId, {
+      addressedToDM: routing.kind === "addressed_to_dm",
+      userId: message.author.id
+    })) return;
 
     const providerName = process.env.AI_PROVIDER || "cloudflare";
     const provider = getAIProvider(providerName);
