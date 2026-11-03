@@ -49,7 +49,8 @@ export function createConversationContextStore({
         content: message.content.trim().slice(0, 2000),
         timestamp: message.timestamp ?? new Date().toISOString(),
         replyToMessageId: typeof message.replyToMessageId === "string" ? message.replyToMessageId : null,
-        mentions: Array.isArray(message.mentions) ? message.mentions.filter(id => typeof id === "string").slice(0, 20) : []
+        replyToAuthorName: typeof message.replyToAuthorName === "string" ? message.replyToAuthorName.slice(0, 80) : null,
+        mentions: Array.isArray(message.mentions) ? message.mentions.filter(name => typeof name === "string").slice(0, 20) : []
       };
       const messages = getChannel(channelId);
       messages.push(entry);
