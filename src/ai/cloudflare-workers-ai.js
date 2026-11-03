@@ -54,7 +54,8 @@ export function createCloudflareWorkersAIProvider({
   if (typeof fetchImpl !== "function") throw new TypeError("Se necesita una implementación de fetch.");
 
   async function runModel(model, inputs) {
-    const modelPath = requiredString(model, "model").split("/").map(segment => encodeURIComponent(segment)).join("/");
+    const modelPath = requiredString(model, "model");
+    if (!/^@[a-z0-9-]+\/[a-z0-9._-]+(?:\/[a-z0-9._-]+)*$/i.test(modelPath)) throw new TypeError("Identificador de modelo Cloudflare no válido.");
     const url = `https://api.cloudflare.com/client/v4/accounts/${encodeURIComponent(safeAccountId)}/ai/run/${modelPath}`;
     const response = await fetchImpl(url, {
       method: "POST",
@@ -118,18 +119,15 @@ export function createCloudflareWorkersAIProvider({
     },
 
     async generateImage({ prompt, negativePrompt = "", width = 1024, height = 1024, steps = 4 } = {}) {
-      if (typeof prompt !== "string" || !prompt.trim() || prompt.length > 4000) throw new TypeError("La descripción de imagen debe tener entre 1 y 4000 caracteres.");
+      if (typeof prompt !== "string" || !prompt.trim() || prompt.length > 2048) throw new TypeError("La descripción de imagen debe tener entre 1 y 2048 caracteres.");
       const data = await runModel(imageModel, {
         prompt: prompt.trim(),
-        negative_prompt: String(negativePrompt).slice(0, 1000),
-        width: Math.max(256, Math.min(1024, Math.round(width))),
-        height: Math.max(256, Math.min(1024, Math.round(height))),
-        num_steps: Math.max(1, Math.min(8, Math.round(steps)))
+        steps: Math.max(1, Math.min(8, Math.round(steps)))
       });
       if (data?.imageBase64 && data?.mimeType) return data;
       const image = typeof data?.result === "string" ? data.result : data?.result?.image ?? data?.image;
       if (typeof image !== "string" || !image) throw new Error("Cloudflare no devolvió una imagen en un formato reconocido.");
-      return { mimeType: "image/png", imageBase64: image };
+      return { mimeType: "image/jpeg", imageBase64: image };
     }
   });
 }
