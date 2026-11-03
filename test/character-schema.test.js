@@ -38,3 +38,27 @@ test("removes duplicate languages", () => {
   });
   assert.deepEqual(character.languages, ["Common", "Elvish"]);
 });
+
+test("preserves descriptive backstory and roleplay details for the narrative AI", () => {
+  const character = createCharacterDraft({
+    ...validInput,
+    backstory: "Creció en un puerto y aprendió a leer las estrellas.",
+    personality: "Curiosa y reservada",
+    ideals: "La libertad",
+    bonds: "Su tripulación",
+    flaws: "Desconfía de los nobles",
+    goals: ["Encontrar a su hermano"],
+    relationships: ["Mara: antigua compañera"],
+    roleplayNotes: "Evita hablar de su pasado."
+  });
+  assert.match(character.backstory, /puerto/);
+  assert.equal(character.personality, "Curiosa y reservada");
+  assert.deepEqual(character.goals, ["Encontrar a su hermano"]);
+  assert.deepEqual(character.relationships, ["Mara: antigua compañera"]);
+  assert.equal(character.roleplayNotes, "Evita hablar de su pasado.");
+});
+
+test("rejects oversized or malformed roleplay details", () => {
+  assert.throws(() => createCharacterDraft({ ...validInput, backstory: "x".repeat(5001) }), /backstory/);
+  assert.throws(() => createCharacterDraft({ ...validInput, goals: "no es una lista" }), /goals/);
+});
