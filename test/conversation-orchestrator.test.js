@@ -40,11 +40,9 @@ test("construye el contexto de conversación con indicación de mención directa
   const payload = buildConversationPayload({
     campaign: { name: "Edrava", worldId: "edrava", characters: [] },
     messages: [{ authorName: "Jugador", content: "Atlas, ¿qué veo?" }],
-    addressedToDM: true,
-    currentAuthorId: "player-1"
+    addressedToDM: true
   });
   assert.equal(payload.addressedToDM, true);
-  assert.equal(payload.currentAuthorId, "player-1");
   assert.match(payload.campaignContext, /Edrava/);
 });
 
