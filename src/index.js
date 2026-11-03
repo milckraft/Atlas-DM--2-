@@ -5,7 +5,8 @@ import { env } from "./config/env.js";
 import { commands } from "./commands/registry.js";
 import { rollD20 } from "./rules/dice.js";
 import { listClassEntries } from "./characters/class-catalogue.js";
-import { detectActionIntent, describeDetectedAction } from "./ai/action-intent.js";
+import { getAIProvider } from "./ai/provider-registry.js";
+import { buildConversationPayload, decideCampaignConversation } from "./ai/conversation-orchestrator.js";
 import { classifyDiscordMessage, createConversationContextStore } from "./ai/conversation-context.js";
 import { analyzeCharacterBackground } from "./characters/background-ai.js";
 import { registerAIProvider } from "./ai/provider-registry.js";
@@ -196,10 +197,33 @@ client.on(Events.MessageCreate, async message => {
       replyToMessageId: message.reference?.messageId ?? null,
       mentions: [...message.mentions.users.keys()]
     });
-    // Context capture is ready; semantic replies await a configured dialogue provider.
-    const result = detectActionIntent(message.content);
-    if (result.detected) await message.reply(describeDetectedAction(result));
-    else if (result.ambiguous) await message.reply("Detecté varias acciones posibles: " + result.candidates.map(item => item.label).join(", ") + ". ¿Cuál intentas primero?");
+    const providerName = process.env.AI_PROVIDER || "cloudflare";
+    const provider = getAIProvider(providerName);
+    if (!provider || typeof provider.interpretConversation !== "function") return;
+
+    const recentMessages = conversationContext.getRecent(message.channelId, 30);
+    const payload = buildConversationPayload({
+      campaign,
+      messages: recentMessages,
+      addressedToDM: routing.kind === "addressed_to_dm",
+      currentAuthorId: message.author.id
+    });
+    const result = await decideCampaignConversation(provider, payload);
+    if (result.status !== "ok") return;
+
+    const decision = result.decision;
+    if (decision.decision === "respond" && decision.reply.trim()) {
+      await message.reply({ content: decision.reply.slice(0, 1800), allowedMentions: { repliedUser: false } });
+    } else if (decision.decision === "clarify") {
+      const clarification = decision.reply.trim() || decision.clarification || "¿Puedes aclarar qué intentas hacer?";
+      await message.reply({ content: clarification.slice(0, 1800), allowedMentions: { repliedUser: false } });
+    } else if (decision.decision === "propose_action") {
+      const description = decision.action?.description ?? "la acción que has descrito";
+      const response = decision.reply.trim() || `Entiendo que intentas: ${description}. Todavía necesito resolverlo mediante las reglas de la campaña.`;
+      await message.reply({ content: response.slice(0, 1800), allowedMentions: { repliedUser: false } });
+    }
+    // "observe" intentionally produces no Discord reply, so player-to-player
+    // conversations remain uninterrupted. No action is mechanically resolved here.
   } catch (error) {
     console.error("Error al procesar mensaje de campaña:", error);
   }
