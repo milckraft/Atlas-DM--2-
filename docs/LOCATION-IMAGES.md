@@ -1,18 +1,21 @@
 # Referencias visuales de lugares
 
-## Objetivo
-Generar una imagen de referencia para un lugar de campaña y publicarla como adjunto en el canal de Discord. La generación usa el método de imagen del proveedor de IA ya configurado.
+## Flujo validado
+1. Un administrador o DM registra ubicaciones conocidas mediante `/ubicacion registrar`, con ID estable, nombre y descripción.
+2. El DM confirma la llegada del grupo con `/ubicacion entrar`. No se infiere llegada desde el chat ni desde la IA.
+3. El motor de campaña valida que el ID exista y que sea un cambio real de ubicación, actualiza `currentLocationId` y registra `location-entered`.
+4. El workflow genera o recupera la imagen en caché y la publica en el canal elegido.
 
 ## Caché y límites
-- Las imágenes se guardan fuera del JSON de campaña, en `<ATLAS_DATA_DIR>/image-cache`.
-- La clave de caché combina campaña, identificador estable del lugar y prompt. Volver al mismo lugar con la misma descripción reutiliza la imagen.
+- Las imágenes se guardan en `<ATLAS_DATA_DIR>/image-cache`.
+- La clave combina campaña, ID estable y prompt; volver al lugar con la misma descripción reutiliza la imagen.
 - Solo se aceptan JPEG, PNG y WebP de hasta 8 MiB.
-- Los identificadores se validan y los nombres de archivo se derivan de SHA-256; nunca se usan nombres aportados por jugadores como rutas.
-- Si el modelo falla o devuelve un formato no reconocido, no se publica una imagen.
+- Los nombres de archivo derivan de SHA-256 y nunca de texto libre del jugador.
+- Si no hay proveedor, canal o imagen válida, el estado de campaña sigue siendo válido y no se publica contenido inventado.
 
-## Integración y estado
-- `createLocationImageService` genera o recupera una referencia visual.
-- `postLocationReferenceImage` publica el adjunto en Discord sin menciones automáticas.
-- Esta capa no decide cuándo un grupo ha llegado a un lugar. La llamada debe venir de un evento de entrada a ubicación validado por el estado de campaña, no de una frase libre o de una sugerencia de la IA.
-- La detección fiable de llegada y su conexión con el motor de ubicaciones quedan pendientes. Hasta entonces, no se generan imágenes automáticamente por cada mensaje.
-- La caché depende del almacenamiento persistente configurado en `ATLAS_DATA_DIR`; si el alojamiento borra ese directorio, se volverán a generar imágenes.
+## Seguridad e integración
+- Los comandos de registro y entrada requieren permiso Gestionar servidor.
+- La IA conversacional no puede emitir transiciones de ubicación.
+- Las ubicaciones deben estar registradas antes de poder seleccionarlas.
+- El evento de entrada se guarda en la campaña; el caché se mantiene separado del JSON.
+- La publicación ocurre después de guardar el estado. Si falla el proveedor o Discord, el registro de llegada permanece y se puede reintentar usando la caché.
