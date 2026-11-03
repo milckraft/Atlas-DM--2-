@@ -2,35 +2,38 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { createConversationRateLimiter } from "../src/ai/conversation-rate-limiter.js";
 
-test("limits ambient AI interpretation per channel", () => {
+test("limita interpretación ambiental por canal", () => {
   let current = 1000;
   const limiter = createConversationRateLimiter({ cooldownMs: 4000, now: () => current });
   assert.equal(limiter.allow("channel-a"), true);
   assert.equal(limiter.allow("channel-a"), false);
-  current += 3999;
-  assert.equal(limiter.allow("channel-a"), false);
-  current += 1;
+  current += 4000;
   assert.equal(limiter.allow("channel-a"), true);
 });
 
-test("prioritizes messages explicitly addressed to Atlas", () => {
-  const limiter = createConversationRateLimiter({ cooldownMs: 4000, now: () => 1000 });
-  assert.equal(limiter.allow("channel-a"), true);
-  assert.equal(limiter.allow("channel-a"), false);
-  assert.equal(limiter.allow("channel-a", { addressedToDM: true }), true);
+test("prioriza menciones, pero aplica enfriamiento por usuario", () => {
+  let current = 1000;
+  const limiter = createConversationRateLimiter({ addressedCooldownMs: 1500, now: () => current });
+  assert.equal(limiter.allow("channel-a", { addressedToDM: true, userId: "user-1" }), true);
+  assert.equal(limiter.allow("channel-a", { addressedToDM: true, userId: "user-1" }), false);
+  assert.equal(limiter.allow("channel-a", { addressedToDM: true, userId: "user-2" }), true);
+  current += 1500;
+  assert.equal(limiter.allow("channel-a", { addressedToDM: true, userId: "user-1" }), true);
 });
 
-test("keeps channel state bounded and supports clearing", () => {
-  const limiter = createConversationRateLimiter({ maxChannels: 1, now: () => 1000 });
+test("limita estado y permite limpiar un canal", () => {
+  const limiter = createConversationRateLimiter({ maxChannels: 2, now: () => 1000 });
   limiter.allow("a");
-  limiter.allow("b");
-  assert.equal(limiter.size, 1);
+  limiter.allow("b", { addressedToDM: true, userId: "u1" });
+  limiter.allow("b", { addressedToDM: true, userId: "u2" });
+  assert.equal(limiter.size, 2);
   limiter.clear("b");
   assert.equal(limiter.size, 0);
 });
 
-test("rejects invalid configuration and channel IDs", () => {
+test("rechaza configuración y entradas inválidas", () => {
   assert.throws(() => createConversationRateLimiter({ cooldownMs: -1 }), /cooldownMs/);
   const limiter = createConversationRateLimiter();
   assert.throws(() => limiter.allow(" "), /channelId/);
+  assert.throws(() => limiter.allow("channel", { addressedToDM: true }), /userId/);
 });
