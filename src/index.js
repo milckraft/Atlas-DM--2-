@@ -158,7 +158,8 @@ client.on(Events.InteractionCreate, async interaction => {
           const result = registerCampaignLocation(campaign, {
             id: interaction.options.getString("id", true),
             name: interaction.options.getString("nombre", true),
-            description: interaction.options.getString("descripcion", true)
+            description: interaction.options.getString("descripcion", true),
+            channelId: interaction.options.getChannel("canal")?.id ?? null
           });
           await campaignStore.save(result.state);
           await interaction.editReply(`Ubicación **${result.location.name}** registrada con el ID \`${result.location.id}\`. Todavía no se ha generado ninguna imagen.`);
@@ -178,7 +179,7 @@ client.on(Events.InteractionCreate, async interaction => {
             return;
           }
           await campaignStore.save(result.state);
-          const channelId = interaction.options.getChannel("canal")?.id ?? interaction.channelId;
+          const channelId = interaction.options.getChannel("canal")?.id ?? result.location.channelId ?? interaction.channelId;
           if (!locationImageWorkflow) {
             await interaction.editReply(`Llegada a **${result.location.name}** registrada. La generación visual no está disponible porque Cloudflare Workers AI no está configurado.`);
             return;
