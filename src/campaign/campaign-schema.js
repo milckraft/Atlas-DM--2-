@@ -64,7 +64,8 @@ function normalizeEvents(events) {
       source,
       confirmedBy: event.confirmedBy == null ? null : text(event.confirmedBy, "event.confirmedBy", { max: 120 }),
       canonRefs: stringArray(event.canonRefs ?? [], "event.canonRefs", 50),
-      roll
+      roll,
+      check
     };
   });
 }
@@ -104,7 +105,8 @@ export function appendCampaignEvent(state, event) {
     source: event.source ?? "campaign",
     confirmedBy: event.confirmedBy ?? null,
     canonRefs: event.canonRefs ?? [],
-    roll: event.roll ?? null
+    roll: event.roll ?? null,
+    check: event.check ?? null
   });
   if (next.events.length > MAX_EVENTS) next.events = next.events.slice(-MAX_EVENTS);
   next.updatedAt = new Date().toISOString();
