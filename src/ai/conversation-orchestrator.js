@@ -23,8 +23,6 @@ export function buildCampaignCharacterContext(campaign) {
     const classEntry = getClassEntry(character.class);
     const species = getSpeciesEntry(character.species);
     const profile = {
-      characterId: optionalText(character.id, 100),
-      playerId: optionalText(character.playerId, 100),
       name: optionalText(character.name, 100) ?? "Personaje sin nombre",
       level: Number.isInteger(character.level) ? character.level : 1,
       class: classEntry?.name ?? optionalText(character.class, 80),
@@ -43,7 +41,7 @@ export function buildCampaignCharacterContext(campaign) {
   });
 }
 
-export function buildConversationPayload({ campaign, messages, addressedToDM = false, currentAuthorId = null }) {
+export function buildConversationPayload({ campaign, messages, addressedToDM = false }) {
   const recent = Array.isArray(messages) ? messages.slice(-30) : [];
   return {
     campaignContext: [
@@ -53,8 +51,7 @@ export function buildConversationPayload({ campaign, messages, addressedToDM = f
     ].join("\n"),
     characterProfiles: buildCampaignCharacterContext(campaign),
     messages: recent,
-    addressedToDM: Boolean(addressedToDM),
-    currentAuthorId
+    addressedToDM: Boolean(addressedToDM)
   };
 }
 
