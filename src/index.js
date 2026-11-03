@@ -8,6 +8,7 @@ import { listClassEntries } from "./characters/class-catalogue.js";
 import { getAIProvider } from "./ai/provider-registry.js";
 import { buildConversationPayload, decideCampaignConversation } from "./ai/conversation-orchestrator.js";
 import { classifyDiscordMessage, createConversationContextStore } from "./ai/conversation-context.js";
+import { createConversationRateLimiter } from "./ai/conversation-rate-limiter.js";
 import { analyzeCharacterBackground } from "./characters/background-ai.js";
 import { registerAIProvider } from "./ai/provider-registry.js";
 import { createCloudflareWorkersAIProvider } from "./ai/cloudflare-workers-ai.js";
@@ -29,6 +30,7 @@ if (process.env.CLOUDFLARE_ACCOUNT_ID && process.env.CLOUDFLARE_API_TOKEN) {
   console.log("Proveedor Cloudflare Workers AI registrado.");
 }
 const conversationContext = createConversationContextStore({ maxMessagesPerChannel: 30, maxChannels: 100 });
+const conversationRateLimiter = createConversationRateLimiter({ cooldownMs: 4000, maxChannels: 200 });
 const rest = new REST({ version: "10" }).setToken(env.discordToken);
 const commandRoute = env.discordGuildId
   ? Routes.applicationGuildCommands(env.discordClientId, env.discordGuildId)
@@ -273,6 +275,8 @@ client.on(Events.MessageCreate, async message => {
       replyToAuthorName: message.referencedMessage?.member?.displayName ?? message.referencedMessage?.author?.username ?? null,
       mentions: [...message.mentions.users.values()].map(user => user.globalName ?? user.username)
     });
+    if (!conversationRateLimiter.allow(message.channelId, { addressedToDM: routing.kind === "addressed_to_dm" })) return;
+
     const providerName = process.env.AI_PROVIDER || "cloudflare";
     const provider = getAIProvider(providerName);
     if (!provider || typeof provider.interpretConversation !== "function") return;
