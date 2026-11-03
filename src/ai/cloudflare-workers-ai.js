@@ -96,7 +96,9 @@ export function createCloudflareWorkersAIProvider({
       if (!Array.isArray(messages) || messages.length === 0) throw new TypeError("Se necesita contexto de conversación.");
       const safeMessages = messages.slice(-30).map(message => ({
         author: String(message.authorName ?? "Jugador").slice(0, 80),
-        content: String(message.content ?? "").slice(0, 1200)
+        content: String(message.content ?? "").slice(0, 1200),
+        mentions: Array.isArray(message.mentions) ? message.mentions.slice(0, 10).map(name => String(name).slice(0, 80)) : [],
+        replyingTo: typeof message.replyToAuthorName === "string" ? message.replyToAuthorName.slice(0, 80) : null
       }));
       const prompt = [
         "Eres el asistente conversacional de Atlas DM, un Dungeon Master de fantasía.",
