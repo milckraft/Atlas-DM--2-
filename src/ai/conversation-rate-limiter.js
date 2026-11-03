@@ -1,37 +1,37 @@
-const DEFAULT_COOLDOWN_MS = 4000;
-const DEFAULT_MAX_CHANNELS = 200;
+const DEFAULT_AMBIENT_COOLDOWN_MS = 4000;
+const DEFAULT_DIRECTED_COOLDOWN_MS = 1500;
+const DEFAULT_MAX_ENTRIES = 400;
 
 export function createConversationRateLimiter({
-  cooldownMs = DEFAULT_COOLDOWN_MS,
-  maxChannels = DEFAULT_MAX_CHANNELS,
+  cooldownMs = DEFAULT_AMBIENT_COOLDOWN_MS,
+  addressedCooldownMs = DEFAULT_DIRECTED_COOLDOWN_MS,
+  maxChannels = DEFAULT_MAX_ENTRIES,
   now = Date.now
 } = {}) {
   if (!Number.isInteger(cooldownMs) || cooldownMs < 0) throw new TypeError("cooldownMs debe ser un entero no negativo.");
+  if (!Number.isInteger(addressedCooldownMs) || addressedCooldownMs < 0) throw new TypeError("addressedCooldownMs debe ser un entero no negativo.");
   if (!Number.isInteger(maxChannels) || maxChannels < 1) throw new TypeError("maxChannels debe ser un entero positivo.");
   if (typeof now !== "function") throw new TypeError("now debe ser una función.");
-  const lastAmbientRequest = new Map();
+  const requests = new Map();
 
   return {
-    allow(channelId, { addressedToDM = false } = {}) {
+    allow(channelId, { addressedToDM = false, userId = null } = {}) {
       if (typeof channelId !== "string" || !channelId.trim()) throw new TypeError("channelId debe ser texto no vacío.");
-      // Explicitly addressed messages are prioritized; ambient chatter is sampled
-      // at most once per cooldown window per channel.
-      if (addressedToDM) return true;
+      if (addressedToDM && (typeof userId !== "string" || !userId.trim())) throw new TypeError("userId es obligatorio para mensajes dirigidos a Atlas.");
+      const key = addressedToDM ? `directed:${channelId}:${userId}` : `ambient:${channelId}`;
+      const cooldown = addressedToDM ? addressedCooldownMs : cooldownMs;
       const current = now();
-      const previous = lastAmbientRequest.get(channelId);
-      if (previous !== undefined && current - previous < cooldownMs) return false;
-      if (lastAmbientRequest.has(channelId)) lastAmbientRequest.delete(channelId);
-      if (lastAmbientRequest.size >= maxChannels) {
-        const oldest = lastAmbientRequest.keys().next().value;
-        lastAmbientRequest.delete(oldest);
-      }
-      lastAmbientRequest.set(channelId, current);
+      const previous = requests.get(key);
+      if (previous !== undefined && current - previous < cooldown) return false;
+      if (requests.has(key)) requests.delete(key);
+      if (requests.size >= maxChannels) requests.delete(requests.keys().next().value);
+      requests.set(key, current);
       return true;
     },
     clear(channelId) {
-      if (channelId == null) lastAmbientRequest.clear();
-      else lastAmbientRequest.delete(channelId);
+      if (channelId == null) requests.clear();
+      else for (const key of requests.keys()) if (key.includes(`:${channelId}:`) || key === `ambient:${channelId}`) requests.delete(key);
     },
-    get size() { return lastAmbientRequest.size; }
+    get size() { return requests.size; }
   };
 }
