@@ -8,7 +8,9 @@ import { listClassEntries } from "./characters/class-catalogue.js";
 import { detectActionIntent, describeDetectedAction } from "./ai/action-intent.js";
 import { analyzeCharacterBackground } from "./characters/background-ai.js";
 import { createCampaignStore } from "./campaign/campaign-store.js";
-import { createCampaignState, appendCampaignEvent, appendDiceRollEvent, confirmLatestPlayerReport } from "./campaign/campaign-schema.js";
+import { createCampaignState, appendCampaignEvent, appendDiceRollEvent, appendAbilityCheckEvent, confirmLatestPlayerReport } from "./campaign/campaign-schema.js";
+import { getActiveCampaignCharacter, listCampaignCharacters, selectActiveCampaignCharacter } from "./campaign/character-roster.js";
+import { resolveCharacterSkillCheck } from "./rules/character-checks.js";
 
 const campaignStore = createCampaignStore();
 const rest = new REST({ version: "10" }).setToken(env.discordToken);
@@ -137,6 +139,75 @@ client.on(Events.InteractionCreate, async interaction => {
         const clarification = analysis.needsClarification && analysis.questions.length
           ? `\n\n**Para afinar el análisis:**\n${analysis.questions.map(question => `• ${question}`).join("\n")}` : "";
         await interaction.editReply(`**Análisis narrativo del trasfondo**\n${analysis.summary}\n\n${lines.join("\n\n")}${clarification}\n\nLa recomendación es orientativa: tú decides qué trasfondo encaja mejor.`);
+        return;
+      }
+      if (interaction.commandName === "personaje") {
+        if (!interaction.guildId) {
+          await interaction.reply({ content: "Los personajes se guardan dentro de una campaña de servidor.", ephemeral: true });
+          return;
+        }
+        await interaction.deferReply({ ephemeral: true });
+        const campaign = await campaignStore.get(interaction.guildId);
+        if (!campaign) {
+          await interaction.editReply("Este servidor todavía no tiene campaña. Crea una con /campana crear.");
+          return;
+        }
+        const action = interaction.options.getSubcommand();
+        if (action === "listar") {
+          const characters = listCampaignCharacters(campaign, interaction.user.id);
+          if (!characters.length) {
+            await interaction.editReply("Todavía no tienes personajes registrados en esta campaña. La creación guiada aún no guarda fichas completas.");
+            return;
+          }
+          const active = getActiveCampaignCharacter(campaign, interaction.user.id);
+          await interaction.editReply(characters.map(character =>
+            `• **${character.name}** — ${character.class}, nivel ${character.level}${active?.id === character.id ? " (activo)" : ""} — ID: ${character.id}`
+          ).join("\\n"));
+          return;
+        }
+        if (action === "seleccionar") {
+          const characterId = interaction.options.getString("id", true);
+          try {
+            const updated = selectActiveCampaignCharacter(campaign, characterId, interaction.user.id);
+            await campaignStore.save(updated);
+            const selected = getActiveCampaignCharacter(updated, interaction.user.id);
+            await interaction.editReply(`Personaje activo: **${selected.name}** (nivel ${selected.level}, ${selected.class}).`);
+          } catch (error) {
+            await interaction.editReply(error.message);
+          }
+          return;
+        }
+      }
+      if (interaction.commandName === "prueba") {
+        if (!interaction.guildId) {
+          await interaction.reply({ content: "Las pruebas de habilidad requieren una campaña de servidor.", ephemeral: true });
+          return;
+        }
+        await interaction.deferReply();
+        const campaign = await campaignStore.get(interaction.guildId);
+        if (!campaign) {
+          await interaction.editReply("Este servidor todavía no tiene campaña. Crea una con /campana crear.");
+          return;
+        }
+        const character = getActiveCampaignCharacter(campaign, interaction.user.id);
+        if (!character) {
+          await interaction.editReply("No tienes un personaje activo. Usa /personaje listar y /personaje seleccionar después de registrar una ficha.");
+          return;
+        }
+        const skill = interaction.options.getString("habilidad", true);
+        const dc = interaction.options.getInteger("cd", true);
+        const mode = interaction.options.getString("modo") ?? "normal";
+        const result = resolveCharacterSkillCheck({ character, skill, dc, mode });
+        const updated = appendAbilityCheckEvent(campaign, {
+          result, actorId: interaction.user.id, characterId: character.id
+        });
+        await campaignStore.save(updated);
+        const rolls = result.rolls.length > 1 ? ` (dados: ${result.rolls.join(" y ")})` : "";
+        await interaction.editReply(
+          `🎲 **Prueba de ${skill.replaceAll("_", " ")} — ${character.name}**\\n` +
+          `d20: **${result.kept}**${rolls} | Modificador: ${result.abilityModifier >= 0 ? "+" : ""}${result.abilityModifier} | Competencia: ${result.proficiencyBonus >= 0 ? "+" : ""}${result.proficiencyBonus}\\n` +
+          `**Total: ${result.total}** contra CD ${dc} — **${result.success ? "Éxito" : "Fallo"}**\\n📝 Resultado guardado en la memoria de campaña.`
+        );
         return;
       }
       if (interaction.commandName === "crear_personaje") {
