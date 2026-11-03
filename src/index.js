@@ -6,11 +6,13 @@ import { commands } from "./commands/registry.js";
 import { rollD20 } from "./rules/dice.js";
 import { listClassEntries } from "./characters/class-catalogue.js";
 import { detectActionIntent, describeDetectedAction } from "./ai/action-intent.js";
+import { classifyDiscordMessage, createConversationContextStore } from "./ai/conversation-context.js";
 import { analyzeCharacterBackground } from "./characters/background-ai.js";
 import { createCampaignStore } from "./campaign/campaign-store.js";
 import { createCampaignState, appendCampaignEvent, appendDiceRollEvent, confirmLatestPlayerReport } from "./campaign/campaign-schema.js";
 
 const campaignStore = createCampaignStore();
+const conversationContext = createConversationContextStore({ maxMessagesPerChannel: 30, maxChannels: 100 });
 const rest = new REST({ version: "10" }).setToken(env.discordToken);
 const commandRoute = env.discordGuildId
   ? Routes.applicationGuildCommands(env.discordClientId, env.discordGuildId)
@@ -171,10 +173,25 @@ client.on(Events.InteractionCreate, async interaction => {
 });
 
 client.on(Events.MessageCreate, async message => {
-  if (message.author.bot || !message.guild || !message.content.trim()) return;
-  const result = detectActionIntent(message.content);
-  if (result.detected) await message.reply(describeDetectedAction(result));
-  else if (result.ambiguous) await message.reply("Detecté varias acciones posibles: " + result.candidates.map(item => item.label).join(", ") + ". ¿Cuál intentas primero?");
+  try {
+    const routing = classifyDiscordMessage(message, { botUserId: client.user?.id ?? null });
+    if (routing.kind === "ignore") return;
+    const campaign = await campaignStore.get(message.guildId);
+    if (!campaign || campaign.status !== "active") return;
+    conversationContext.append(message.channelId, {
+      messageId: message.id, authorId: message.author.id,
+      authorName: message.member?.displayName ?? message.author.username,
+      content: message.content, timestamp: message.createdAt?.toISOString(),
+      replyToMessageId: message.reference?.messageId ?? null,
+      mentions: [...message.mentions.users.keys()]
+    });
+    // Context capture is ready; semantic replies await a configured dialogue provider.
+    const result = detectActionIntent(message.content);
+    if (result.detected) await message.reply(describeDetectedAction(result));
+    else if (result.ambiguous) await message.reply("Detecté varias acciones posibles: " + result.candidates.map(item => item.label).join(", ") + ". ¿Cuál intentas primero?");
+  } catch (error) {
+    console.error("Error al procesar mensaje de campaña:", error);
+  }
 });
 client.on(Events.Error, error => console.error("Error del cliente de Discord:", error));
 process.on("unhandledRejection", error => console.error("Promesa rechazada sin gestionar:", error));
