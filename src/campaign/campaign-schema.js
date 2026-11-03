@@ -83,14 +83,14 @@ export function createCampaignState(input = {}) {
     canonRefs: stringArray(input.canonRefs ?? [], "canonRefs"),
     players: normalizeRecords(input.players ?? [], "players"),
     characters: normalizeRecords(input.characters ?? [], "characters"),
-    locations: normalizeRecords(input.locations ?? [], "locations"),
+    locations: normalizeRecords(input.locations ?? [], "locations"),\n    currentLocationId: input.currentLocationId == null ? null : text(input.currentLocationId, "currentLocationId", { max: 120 }),
     npcs: normalizeRecords(input.npcs ?? [], "npcs"),
     quests: normalizeRecords(input.quests ?? [], "quests"),
     inventory: normalizeRecords(input.inventory ?? [], "inventory"),
     flags: normalizeFlags(input.flags ?? {}),
     events: normalizeEvents(input.events ?? [])
   };
-  if (!STATUSES.has(state.status)) throw new TypeError("Estado de campaña no válido.");
+  if (!STATUSES.has(state.status)) throw new TypeError("Estado de campaña no válido.");\n  if (state.currentLocationId && !state.locations.some(location => location.id === state.currentLocationId)) throw new TypeError("La ubicación actual debe existir en el registro de ubicaciones.");
   if (state.events.length > MAX_EVENTS) throw new RangeError("La campaña supera el máximo de eventos.");
   return state;
 }
