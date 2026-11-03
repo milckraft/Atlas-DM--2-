@@ -11,7 +11,7 @@ function parseModelText(payload) {
   if (typeof text !== "string" || !text.trim()) throw new Error("Cloudflare devolvió una respuesta de texto vacía o desconocida.");
   const trimmed = text.trim();
   try { return JSON.parse(trimmed); } catch {}
-  const fenced = trimmed.match(/```(?:json)?\\s*([\\s\\S]*?)\\s*```/i);
+  const fenced = trimmed.match(/```(?:json)?\s*([\s\S]*?)\s*```/i);
   if (fenced) {
     try { return JSON.parse(fenced[1]); } catch {}
   }
@@ -54,7 +54,8 @@ export function createCloudflareWorkersAIProvider({
   if (typeof fetchImpl !== "function") throw new TypeError("Se necesita una implementación de fetch.");
 
   async function runModel(model, inputs) {
-    const url = `https://api.cloudflare.com/client/v4/accounts/${encodeURIComponent(safeAccountId)}/ai/run/${encodeURIComponent(model)}`;
+    const modelPath = requiredString(model, "model").split("/").map(segment => encodeURIComponent(segment)).join("/");
+    const url = `https://api.cloudflare.com/client/v4/accounts/${encodeURIComponent(safeAccountId)}/ai/run/${modelPath}`;
     const response = await fetchImpl(url, {
       method: "POST",
       headers: {
@@ -107,7 +108,7 @@ export function createCloudflareWorkersAIProvider({
         "Contexto de campaña:", String(campaignContext).slice(0, 4000),
         "Perfiles de personajes:", JSON.stringify(characterProfiles).slice(0, 8000),
         "Mensajes recientes:", JSON.stringify(safeMessages)
-      ].join("\\n\\n");
+      ].join("\n\n");
       const data = await runModel(textModel, {
         messages: [{ role: "user", content: prompt }],
         max_tokens: 700,
@@ -126,7 +127,7 @@ export function createCloudflareWorkersAIProvider({
         num_steps: Math.max(1, Math.min(8, Math.round(steps)))
       });
       if (data?.imageBase64 && data?.mimeType) return data;
-      const image = data?.result?.image ?? data?.image;
+      const image = typeof data?.result === "string" ? data.result : data?.result?.image ?? data?.image;
       if (typeof image !== "string" || !image) throw new Error("Cloudflare no devolvió una imagen en un formato reconocido.");
       return { mimeType: "image/png", imageBase64: image };
     }
