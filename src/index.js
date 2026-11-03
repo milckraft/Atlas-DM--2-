@@ -13,6 +13,8 @@ import { registerAIProvider } from "./ai/provider-registry.js";
 import { createCloudflareWorkersAIProvider } from "./ai/cloudflare-workers-ai.js";
 import { createCampaignStore } from "./campaign/campaign-store.js";
 import { createCampaignState, appendCampaignEvent, appendDiceRollEvent, confirmLatestPlayerReport } from "./campaign/campaign-schema.js";
+import { registerCampaignLocation, enterCampaignLocation } from "./campaign/location-transitions.js";
+import { createLocationImageWorkflow } from "./visual/location-image-workflow.js";
 
 const campaignStore = createCampaignStore();
 if (process.env.CLOUDFLARE_ACCOUNT_ID && process.env.CLOUDFLARE_API_TOKEN) {
@@ -35,6 +37,12 @@ console.log(`Registrados ${commands.length} comandos de Atlas DM.`);
 const client = new Client({
   intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent]
 });
+
+const locationImageWorkflow = cloudflareProvider ? createLocationImageWorkflow({
+  provider: cloudflareProvider,
+  directory: process.env.ATLAS_DATA_DIR || "./data/campaigns",
+  resolveChannel: channelId => client.channels.fetch(channelId)
+}) : null;
 
 client.once(Events.ClientReady, readyClient => console.log(`Atlas DM conectado como ${readyClient.user.tag}`));
 
@@ -125,6 +133,70 @@ client.on(Events.InteractionCreate, async interaction => {
           });
           await campaignStore.save(updated);
           await interaction.editReply("Aporte añadido al registro de la campaña. **Está marcado como no verificado** y no modifica por sí solo el canon, las fichas ni el inventario.");
+          return;
+        }
+      }
+      if (interaction.commandName === "ubicacion") {
+        if (!interaction.guildId) {
+          await interaction.reply({ content: "Las ubicaciones solo pueden gestionarse dentro de un servidor.", ephemeral: true });
+          return;
+        }
+        if (!interaction.memberPermissions?.has(PermissionFlagsBits.ManageGuild)) {
+          await interaction.reply({ content: "Solo alguien con el permiso Gestionar servidor puede registrar ubicaciones o confirmar llegadas.", ephemeral: true });
+          return;
+        }
+        await interaction.deferReply({ ephemeral: true });
+        const campaign = await campaignStore.get(interaction.guildId);
+        if (!campaign) {
+          await interaction.editReply("Todavía no existe una campaña en este servidor. Crea una con /campana crear.");
+          return;
+        }
+        const action = interaction.options.getSubcommand();
+        if (action === "registrar") {
+          const result = registerCampaignLocation(campaign, {
+            id: interaction.options.getString("id", true),
+            name: interaction.options.getString("nombre", true),
+            description: interaction.options.getString("descripcion", true)
+          });
+          await campaignStore.save(result.state);
+          await interaction.editReply(`Ubicación **${result.location.name}** registrada con el ID \`${result.location.id}\`. Todavía no se ha generado ninguna imagen.`);
+          return;
+        }
+        if (action === "entrar") {
+          const result = enterCampaignLocation(campaign, {
+            locationId: interaction.options.getString("id", true),
+            actorId: interaction.user.id
+          });
+          if (result.status === "unknown_location") {
+            await interaction.editReply("No existe una ubicación con ese ID. Regístrala primero con /ubicacion registrar.");
+            return;
+          }
+          if (result.status === "already_there") {
+            await interaction.editReply(`La campaña ya está registrada en **${result.location.name}**. No generaré otra imagen por una llegada repetida.`);
+            return;
+          }
+          await campaignStore.save(result.state);
+          const channelId = interaction.options.getChannel("canal")?.id ?? interaction.channelId;
+          if (!locationImageWorkflow) {
+            await interaction.editReply(`Llegada a **${result.location.name}** registrada. La generación visual no está disponible porque Cloudflare Workers AI no está configurado.`);
+            return;
+          }
+          try {
+            const imageResult = await locationImageWorkflow.onLocationEntered({
+              campaignId: interaction.guildId,
+              locationId: result.location.id,
+              locationName: result.location.name,
+              description: result.location.description,
+              channelId
+            });
+            const statusText = imageResult.status === "generated" ? "Imagen generada y publicada." :
+              imageResult.status === "cached" ? "Imagen recuperada de la caché y publicada." :
+              "La llegada quedó guardada, pero no se pudo publicar una imagen esta vez.";
+            await interaction.editReply(`Llegada a **${result.location.name}** registrada. ${statusText}`);
+          } catch (imageError) {
+            console.error("Error al publicar referencia visual de ubicación:", imageError);
+            await interaction.editReply(`Llegada a **${result.location.name}** guardada. La imagen no pudo publicarse; el estado de campaña no se ha perdido.`);
+          }
           return;
         }
       }
