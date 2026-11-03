@@ -47,10 +47,10 @@ function normalizeEvents(events) {
           !Number.isInteger(value.total) || !Number.isInteger(value.dc) || value.dc < 0 ||
           typeof value.success !== "boolean" || typeof value.proficient !== "boolean" ||
           !Number.isInteger(value.abilityModifier) || !Number.isInteger(value.proficiencyBonus) ||
-          typeof value.skill !== "string" || !value.skill.trim()) throw new TypeError("Datos de prueba de habilidad no válidos.");
+          typeof value.skill !== "string" || !value.skill.trim() || typeof value.characterId !== "string" || !value.characterId.trim()) throw new TypeError("Datos de prueba de habilidad no válidos.");
       return { type: value.type, ability: value.ability, skill: value.skill, total: value.total, dc: value.dc,
         success: value.success, proficient: value.proficient, abilityModifier: value.abilityModifier,
-        proficiencyBonus: value.proficiencyBonus };
+        proficiencyBonus: value.proficiencyBonus, characterId: value.characterId };
     })();
     if (source === "engine" && !((roll && event.type === "dice-roll") || (roll && check && event.type === "ability-check"))) {
       throw new TypeError("Los eventos del motor deben contener una tirada o prueba válida.");
