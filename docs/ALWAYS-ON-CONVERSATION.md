@@ -8,13 +8,13 @@ Atlas DM observes every human message in the configured campaign channel, mainta
 2. Capture author ID/name, message ID, content, timestamp, mentions and reply target.
 3. Keep a bounded rolling context per channel. This first implementation is in-memory and is intentionally not campaign canon or persistent game state.
 4. Classify direct mentions/replies to Atlas separately from ambient table conversation.
-5. Send context to a dialogue provider for semantic interpretation when one is configured.
+5. Send context to the Cloudflare Workers AI adapter for semantic interpretation when credentials and `AI_PROVIDER=cloudflare` are configured.
 6. Validate the provider's structured intent. The provider may propose dialogue/action intent but may not roll dice, set DCs, change character sheets, award items/XP, or mutate campaign state.
 7. Route mechanical actions to deterministic rules services; route player/NPC conversation to narration; route ambiguous intent to a short clarification.
 8. Persist only validated game events through the campaign store.
 
 ## Important current limitation
-The repository currently has no configured dialogue provider by default (`AI_PROVIDER` defaults to `disabled`). The existing keyword action detector is not a natural-language understanding system. This change adds the safe context and routing foundation; fully natural conversation requires implementing and configuring a provider adapter and adding structured-output validation before enabling automatic narration.
+The Cloudflare Workers AI adapter is now available on the `feature/cloudflare-ai-providers` branch. It can interpret a bounded conversation context and returns a validated decision (`respond`, `observe`, `clarify`, or `propose_action`). The Discord listener does not yet call it: automatic narration still requires the conversation-policy integration, campaign/character context assembly, and tests. Without credentials and `AI_PROVIDER=cloudflare`, AI remains unavailable; the keyword action detector is not a natural-language understanding system.
 
 ## Privacy and operational limits
 - Context is memory-only, bounded to 30 messages per channel and 100 channels by default.
