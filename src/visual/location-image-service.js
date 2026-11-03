@@ -15,6 +15,7 @@ function requiredText(value, field, max = 1000) {
 export function createLocationImageService({ provider, directory = process.env.ATLAS_DATA_DIR || "./data/campaigns" } = {}) {
   if (!provider || typeof provider.generateImage !== "function") throw new TypeError("El proveedor debe implementar generateImage().");
   const cacheDirectory = resolve(directory, "image-cache");
+  const pendingGenerations = new Map();
 
   return {
     async getOrCreate({ campaignId, locationId, locationName, description, style = "fantasía medieval ilustrada, composición panorámica, sin texto" }) {
@@ -39,16 +40,30 @@ export function createLocationImageService({ provider, directory = process.env.A
         if (error.code !== "ENOENT") throw error;
       }
 
-      const generated = await provider.generateImage({ prompt });
-      if (!generated || !ALLOWED_MIME.has(generated.mimeType) || typeof generated.imageBase64 !== "string") {
-        return { status: "invalid_image" };
-      }
-      const buffer = Buffer.from(generated.imageBase64, "base64");
-      if (!buffer.length || buffer.length > MAX_IMAGE_BYTES) return { status: "image_too_large" };
-      await writeFile(filePath, buffer, { flag: "wx" }).catch(async error => {
-        if (error.code !== "EEXIST") throw error;
-      });
-      return { status: "generated", mimeType: generated.mimeType, buffer, cacheKey };
+      if (pendingGenerations.has(cacheKey)) return pendingGenerations.get(cacheKey);
+      const generation = (async () => {
+        const generated = await provider.generateImage({ prompt });
+        if (!generated || !ALLOWED_MIME.has(generated.mimeType) || typeof generated.imageBase64 !== "string") {
+          return { status: "invalid_image" };
+        }
+        const buffer = Buffer.from(generated.imageBase64, "base64");
+        if (!buffer.length || buffer.length > MAX_IMAGE_BYTES) return { status: "image_too_large" };
+        try {
+          await writeFile(filePath, buffer, { flag: "wx" });
+          return { status: "generated", mimeType: generated.mimeType, buffer, cacheKey };
+        } catch (error) {
+          if (error.code !== "EEXIST") throw error;
+          const winner = await readFile(filePath);
+          const winnerMime = winner.subarray(0, 8).toString("hex").startsWith("89504e47") ? "image/png" :
+            winner.subarray(0, 3).toString("hex") === "ffd8ff" ? "image/jpeg" :
+            winner.subarray(0, 4).toString() === "RIFF" && winner.subarray(8, 12).toString() === "WEBP" ? "image/webp" : null;
+          if (!winnerMime || !winner.length || winner.length > MAX_IMAGE_BYTES) throw new Error("La caché concurrente contiene una imagen no válida.");
+          return { status: "cached", mimeType: winnerMime, buffer: winner, cacheKey };
+        }
+      })();
+      pendingGenerations.set(cacheKey, generation);
+      try { return await generation; }
+      finally { if (pendingGenerations.get(cacheKey) === generation) pendingGenerations.delete(cacheKey); }
     }
   };
 }
