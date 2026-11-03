@@ -18,7 +18,7 @@ Set these in the hosting provider's environment-variable / secrets panel. Never 
 - `CLOUDFLARE_ACCOUNT_ID`
 - `CLOUDFLARE_API_TOKEN` (scoped to the Workers AI permissions needed by the account)
 
-Set `AI_PROVIDER=cloudflare` to select the provider for existing `requestAI` calls, including the character-background analysis. Optional model overrides:
+Cloudflare is selected automatically when credentials are present unless `AI_PROVIDER` names another registered provider. Set `AI_PROVIDER=cloudflare` explicitly if desired. Optional model overrides:
 - `CLOUDFLARE_TEXT_MODEL`
 - `CLOUDFLARE_IMAGE_MODEL`
 
@@ -32,7 +32,8 @@ Cloudflare Workers AI currently documents a shared allowance of 10,000 Neurons p
 - Text and image models are separate operations.
 - Text output is parsed and conversation decisions are validated against a small allowlist.
 - Image output is returned as base64 plus MIME type; a later storage/delivery layer must save it or attach it to Discord.
-- No API key is returned in logs or model prompts.
+- No API key or Discord account IDs are returned in logs or model prompts.
+- Character backstories and roleplay details are sent to the configured provider as context for the campaign conversation. Avoid putting real-world sensitive personal information in character biographies.
 
 ## Current implementation status
 Implemented in this branch:
@@ -40,10 +41,14 @@ Implemented in this branch:
 - Registration in the bot when credentials are configured.
 - Unit tests using a mocked fetch implementation.
 
+Implemented in the character-aware conversation pass:
+- Automatic conversation-policy integration into the Discord message listener for active campaign channels.
+- Context assembly from recent messages and up to eight campaign character profiles.
+- Character backstory, personality, ideals, bonds, flaws, goals, relationships and roleplay notes preserved by the character draft schema.
+
 Not implemented yet:
-- Automatic conversation-policy integration into the Discord message listener.
-- Character/campaign context assembly from persisted campaign records.
 - Image caching/storage and Discord attachment delivery.
+- Mechanical action dispatch from validated proposals into deterministic rules services.
 - Live API verification and executed test suite.
 
 Do not deploy or enable always-on replies until those pieces and the safety tests are reviewed.
