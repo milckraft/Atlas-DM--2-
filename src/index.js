@@ -17,13 +17,15 @@ import { registerCampaignLocation, enterCampaignLocation } from "./campaign/loca
 import { createLocationImageWorkflow } from "./visual/location-image-workflow.js";
 
 const campaignStore = createCampaignStore();
+let cloudflareProvider = null;
 if (process.env.CLOUDFLARE_ACCOUNT_ID && process.env.CLOUDFLARE_API_TOKEN) {
-  registerAIProvider("cloudflare", createCloudflareWorkersAIProvider({
+  cloudflareProvider = createCloudflareWorkersAIProvider({
     accountId: process.env.CLOUDFLARE_ACCOUNT_ID,
     apiToken: process.env.CLOUDFLARE_API_TOKEN,
     textModel: process.env.CLOUDFLARE_TEXT_MODEL,
     imageModel: process.env.CLOUDFLARE_IMAGE_MODEL
-  }));
+  });
+  registerAIProvider("cloudflare", cloudflareProvider);
   console.log("Proveedor Cloudflare Workers AI registrado.");
 }
 const conversationContext = createConversationContextStore({ maxMessagesPerChannel: 30, maxChannels: 100 });
