@@ -38,3 +38,15 @@ test("rechaza respuestas de imagen con formato no permitido", async () => {
     assert.equal(result.status, "invalid_image");
   } finally { await rm(directory, { recursive: true, force: true }); }
 });
+
+test("rechaza una imagen cuyo contenido no coincide con el MIME declarado", async () => {
+  const directory = await mkdtemp(join(tmpdir(), "atlas-image-"));
+  try {
+    const service = createLocationImageService({
+      directory,
+      provider: { async generateImage() { return { mimeType: "image/webp", imageBase64: png.toString("base64") }; } }
+    });
+    const result = await service.getOrCreate({ campaignId: "c1", locationId: "l1", locationName: "Lugar", description: "Descripción" });
+    assert.equal(result.status, "invalid_image");
+  } finally { await rm(directory, { recursive: true, force: true }); }
+});
