@@ -195,7 +195,8 @@ client.on(Events.MessageCreate, async message => {
       authorName: message.member?.displayName ?? message.author.username,
       content: message.content, timestamp: message.createdAt?.toISOString(),
       replyToMessageId: message.reference?.messageId ?? null,
-      mentions: [...message.mentions.users.keys()]
+      replyToAuthorName: message.referencedMessage?.member?.displayName ?? message.referencedMessage?.author?.username ?? null,
+      mentions: [...message.mentions.users.values()].map(user => user.globalName ?? user.username)
     });
     const providerName = process.env.AI_PROVIDER || "cloudflare";
     const provider = getAIProvider(providerName);
