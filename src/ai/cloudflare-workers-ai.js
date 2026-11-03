@@ -92,7 +92,7 @@ export function createCloudflareWorkersAIProvider({
       return parseModelText(data);
     },
 
-    async interpretConversation({ messages, characterProfiles = [], campaignContext = "", addressedToDM = false, currentAuthorId = null } = {}) {
+    async interpretConversation({ messages, characterProfiles = [], campaignContext = "", addressedToDM = false } = {}) {
       if (!Array.isArray(messages) || messages.length === 0) throw new TypeError("Se necesita contexto de conversación.");
       const safeMessages = messages.slice(-30).map(message => ({
         author: String(message.authorName ?? "Jugador").slice(0, 80),
@@ -108,7 +108,6 @@ export function createCloudflareWorkersAIProvider({
         "Devuelve exclusivamente JSON con esta forma: {decision:'respond'|'observe'|'clarify'|'propose_action',reply:string,action:null|{description:string},clarification:null|string}.",
         "Contexto de campaña:", String(campaignContext).slice(0, 4000),
         "¿El mensaje actual está dirigido a Atlas?:", String(Boolean(addressedToDM)),
-        "ID del autor del mensaje actual:", String(currentAuthorId ?? "desconocido"),
         "Perfiles de personajes:", JSON.stringify(characterProfiles).slice(0, 8000),
         "Mensajes recientes:", JSON.stringify(safeMessages)
       ].join("\n\n");
