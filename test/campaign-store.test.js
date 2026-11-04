@@ -1,4 +1,4 @@
-import test from "node:test";
+importtest from "node:test";
 import assert from "node:assert/strict";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -56,6 +56,30 @@ test("store rejects path traversal and reports missing campaigns", async () => {
     const store = createCampaignStore({ directory: dir });
     await assert.rejects(store.get("../secrets"), /ID de campaña/);
     assert.equal(await store.get("missing-campaign"), null);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("conserva ubicación actual y canal tras reiniciar el almacenamiento", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "atlas-restart-"));
+  try {
+    const firstStore = createCampaignStore({ directory: dir });
+    const state = createCampaignState(fixture({
+      locations: [{
+        id: "tavern",
+        name: "La Corona Rota",
+        description: "Una taberna.",
+        channelId: "123456789"
+      }],
+      currentLocationId: "tavern"
+    }));
+    await firstStore.create(state);
+
+    const restartedStore = createCampaignStore({ directory: dir });
+    const loaded = await restartedStore.get("edrava-test");
+    assert.equal(loaded.currentLocationId, "tavern");
+    assert.equal(loaded.locations[0].channelId, "123456789");
   } finally {
     await rm(dir, { recursive: true, force: true });
   }
