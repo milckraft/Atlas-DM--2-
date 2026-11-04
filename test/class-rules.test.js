@@ -54,3 +54,19 @@ test("Unarmored Defense enforces armor and monk shield restrictions", () => {
     classId: "wizard", dexterityScore: 14, constitutionScore: 14
   }), /no tiene Defensa/);
 });
+
+test("class armor, weapon and tool proficiencies are returned as defensive copies", async () => {
+  const { getClassProficiencies } = await import("../src/characters/class-rules.js");
+  const rogue = getClassProficiencies("rogue");
+  assert.deepEqual(rogue.armor, ["light"]);
+  assert.deepEqual(rogue.weapons, ["simple", "martialLightFinesse"]);
+  assert.deepEqual(rogue.tools, ["thievesTools"]);
+  rogue.armor.push("heavy");
+  assert.deepEqual(getClassProficiencies("rogue").armor, ["light"]);
+
+  const bard = getClassProficiencies("bard");
+  assert.deepEqual(bard.tools, [{ type: "choice", count: 3, from: "musicalInstruments" }]);
+  bard.tools[0].count = 99;
+  assert.equal(getClassProficiencies("bard").tools[0].count, 3);
+  assert.throws(() => getClassProficiencies("unknown"), /Clase no válida/);
+});
