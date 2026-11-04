@@ -22,6 +22,20 @@ function normalizeRecords(records, field) {
     return { ...record, id };
   });
 }
+function normalizeLocations(locations) {
+  return normalizeRecords(locations, "locations").map(location => ({
+    ...location,
+    ...(location.name != null
+      ? { name: text(location.name, "locations.name", { max: 160 }) }
+      : {}),
+    ...(location.description != null
+      ? { description: text(location.description, "locations.description", { max: 1800 }) }
+      : {}),
+    ...(location.channelId != null
+      ? { channelId: text(location.channelId, "locations.channelId", { max: 120 }) }
+      : {})
+  }));
+}
 function normalizeFlags(flags) {
   if (!flags || typeof flags !== "object" || Array.isArray(flags)) throw new TypeError("flags debe ser un objeto.");
   const entries = Object.entries(flags);
@@ -83,7 +97,7 @@ export function createCampaignState(input = {}) {
     canonRefs: stringArray(input.canonRefs ?? [], "canonRefs"),
     players: normalizeRecords(input.players ?? [], "players"),
     characters: normalizeRecords(input.characters ?? [], "characters"),
-    locations: normalizeRecords(input.locations ?? [], "locations"),
+    locations: normalizeLocations(input.locations ?? []),
     currentLocationId: input.currentLocationId == null ? null : text(input.currentLocationId, "currentLocationId", { max: 120 }),
     npcs: normalizeRecords(input.npcs ?? [], "npcs"),
     quests: normalizeRecords(input.quests ?? [], "quests"),
