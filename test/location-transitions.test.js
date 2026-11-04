@@ -22,3 +22,27 @@ test("rechaza IDs desconocidos y ubicaciones duplicadas", () => {
   const registered = registerCampaignLocation(state, { id: "town", name: "Pueblo", description: "Un pueblo." });
   assert.throws(() => registerCampaignLocation(registered.state, { id: "town", name: "Otro", description: "Otro lugar." }), /Ya existe/);
 });
+
+test("conserva y valida el canal de una ubicación", () => {
+  const registered = registerCampaignLocation(campaign(), {
+    id: "tavern-1",
+    name: "La Corona Rota",
+    description: "Taberna del camino.",
+    channelId: "123456789"
+  });
+  const loaded = createCampaignState(registered.state);
+  assert.equal(loaded.locations[0].channelId, "123456789");
+  assert.throws(() => createCampaignState({
+    ...registered.state,
+    locations: [{ ...registered.location, channelId: " " }]
+  }), /locations.channelId/);
+});
+
+test("las campañas antiguas sin ubicación actual siguen siendo compatibles", () => {
+  const legacy = createCampaignState({
+    campaignId: "legacy",
+    name: "Campaña antigua",
+    locations: [{ id: "town", name: "Pueblo" }]
+  });
+  assert.equal(legacy.currentLocationId, null);
+});
