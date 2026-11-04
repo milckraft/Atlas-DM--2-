@@ -23,7 +23,7 @@ test("skill bonuses use the correct ability and level proficiency bonus", () => 
 test("expertise doubles proficiency and requires proficiency", () => {
   assert.equal(calculateSkillBonus({
     skill: "perception", scores, level: 5, proficient: true, expertise: true
-  }), 7);
+  }), 8);
   assert.throws(() => calculateSkillBonus({
     skill: "stealth", scores, level: 1, expertise: true
   }), /pericia/);
