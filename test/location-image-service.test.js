@@ -25,9 +25,12 @@ test("genera una imagen de lugar y reutiliza la caché sin llamar de nuevo al mo
   } finally { await rm(directory, { recursive: true, force: true }); }
 });
 
-test("rechaza identificadores y descripciones inválidas", async () => {
+test("rechaza identificadores vacíos y descripciones demasiado largas", async () => {
   const service = createLocationImageService({ provider: { generateImage: async () => ({}) } });
-  await assert.rejects(() => service.getOrCreate({ campaignId: "../bad", locationId: "x", locationName: "Lugar", description: "Descripción" }));
+  const valid = { campaignId: "campaign-1", locationId: "location-1", locationName: "Lugar", description: "Descripción" };
+  await assert.rejects(() => service.getOrCreate({ ...valid, campaignId: " " }));
+  await assert.rejects(() => service.getOrCreate({ ...valid, locationId: "" }));
+  await assert.rejects(() => service.getOrCreate({ ...valid, description: "x".repeat(1801) }));
 });
 
 test("rechaza respuestas de imagen con formato no permitido", async () => {
