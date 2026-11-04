@@ -85,3 +85,21 @@ export function calculateUnarmoredDefense({
 export function getLevelOneProficiencyBonus() {
   return proficiencyBonus(1);
 }
+
+/**
+ * Returns a defensive copy of the class's level-1 armor, weapon and tool
+ * proficiencies. Choice-based tool proficiencies remain explicit choices.
+ */
+export function getClassProficiencies(classId) {
+  const entry = getClassEntry(classId);
+  if (!entry) throw new RangeError("Clase no válida.");
+  return {
+    armor: [...entry.armorProficiencies],
+    weapons: [...entry.weaponProficiencies],
+    tools: entry.toolProficiencies.map(proficiency =>
+      typeof proficiency === "string"
+        ? proficiency
+        : { ...proficiency, ...(Array.isArray(proficiency.from) ? { from: [...proficiency.from] } : {}) }
+    )
+  };
+}
